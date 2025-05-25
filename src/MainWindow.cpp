@@ -6,11 +6,19 @@
 #include <QGraphicsRectItem>
 #include <QToolBar>
 
-MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent)
+MainWindow::MainWindow(QWidget* parent)
+    : QMainWindow(parent), scene(new CustomScene(this)), view(new QGraphicsView(scene, this))
 {
-    scene = new QGraphicsScene(this);
-    view  = new QGraphicsView(scene, this);
     setCentralWidget(view);
+    setupScene();
+
+    QPixmap defaultPix(":/resources/keyboard.png");
+    if (!defaultPix.isNull())
+    {
+        auto* defaultItem = new QGraphicsPixmapItem(defaultPix);
+        defaultItem->setZValue(-1);
+        scene->addItem(defaultItem);
+    }
 
     auto*    tb      = addToolBar("File");
     QAction* loadImg = tb->addAction("Load Keyboard...");
@@ -25,12 +33,8 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent)
                     auto* pix = new QGraphicsPixmapItem(QPixmap(path));
                     scene->addItem(pix);
                     pix->setZValue(-1);
-                    auto* btn = scene->addRect(50, 50, 80, 30, QPen(Qt::blue), QBrush(Qt::transparent));
-                    btn->setFlags(QGraphicsItem::ItemIsSelectable | QGraphicsItem::ItemIsMovable);
                 }
             });
-
-    setupScene();
 }
 
 void MainWindow::setupScene()

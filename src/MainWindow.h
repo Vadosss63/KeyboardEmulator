@@ -1,8 +1,9 @@
 #pragma once
 
-#include <QGraphicsScene>
 #include <QGraphicsView>
 #include <QMainWindow>
+
+#include "CustomScene.h"
 
 class MainWindow : public QMainWindow
 {
@@ -12,8 +13,8 @@ public:
     MainWindow(QWidget* parent = nullptr);
 
 private:
-    QGraphicsScene* scene;
-    QGraphicsView*  view;
+    CustomScene*   scene;
+    QGraphicsView* view;
 
     void setupScene();
 };

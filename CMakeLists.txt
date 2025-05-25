@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(KeyboardEmulator VERSION 0.1.0 LANGUAGES CXX)
+project(KeyboardEmulator VERSION 0.2.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_AUTOMOC ON)
@@ -9,10 +9,17 @@ set(CMAKE_AUTOUIC ON)
 find_package(Qt6 REQUIRED COMPONENTS Core Widgets Gui SerialPort)
 
 add_executable(${PROJECT_NAME}
-    src/main.cpp
-    src/MainWindow.h
+    resources.qrc
+    src/ButtonItem.h
+    src/CustomScene.h
+    src/DiodeItem.h
     src/MainWindow.cpp
-    src/resources.qrc
+    src/MainWindow.h
+    src/ResizableRectItem.h
+    src/ResizableRectItem.cpp
+    src/ResizeHandle.h
+    src/ResizeHandle.cpp
+    src/main.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}
