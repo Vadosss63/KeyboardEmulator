@@ -11,8 +11,10 @@ find_package(Qt6 REQUIRED COMPONENTS Core Widgets Gui SerialPort)
 add_executable(${PROJECT_NAME}
     resources.qrc
     src/ButtonItem.h
+    src/ButtonItem.cpp
     src/CustomScene.h
     src/DiodeItem.h
+    src/DiodeItem.cpp
     src/MainWindow.cpp
     src/MainWindow.h
     src/ResizableRectItem.h

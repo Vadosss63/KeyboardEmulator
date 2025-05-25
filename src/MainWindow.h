@@ -13,8 +13,8 @@ public:
     MainWindow(QWidget* parent = nullptr);
 
 private:
+    void setupScene();
+
     CustomScene*   scene;
     QGraphicsView* view;
-
-    void setupScene();
 };

@@ -1,5 +1,7 @@
 #include "ResizableRectItem.h"
 
+#include <QGraphicsSceneContextMenuEvent>
+#include <QMenu>
 #include <QSignalBlocker>
 
 #include "ResizeHandle.h"
@@ -7,8 +9,27 @@
 ResizableRectItem::ResizableRectItem(qreal x, qreal y, qreal w, qreal h, QGraphicsItem* parent)
     : QObject(), QGraphicsRectItem(x, y, w, h, parent)
 {
-    setFlags(ItemIsSelectable | ItemIsMovable | ItemSendsGeometryChanges);
     initHandles();
+}
+
+void ResizableRectItem::setResizable(bool on)
+{
+    m_resizable = on;
+
+    if (on)
+    {
+        setFlags(ItemIsSelectable | ItemIsMovable | ItemSendsGeometryChanges);
+    }
+    else
+    {
+        setFlags(ItemSendsGeometryChanges);
+    }
+
+    for (auto* h : m_handles)
+    {
+        h->setVisible(on);
+    }
+    updateHandles();
 }
 
 QVariant ResizableRectItem::itemChange(GraphicsItemChange change, const QVariant& value)
@@ -27,8 +48,25 @@ QVariant ResizableRectItem::itemChange(GraphicsItemChange change, const QVariant
     return v;
 }
 
+void ResizableRectItem::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
+{
+    QMenu    menu;
+    QAction* act    = menu.addAction(m_resizable ? "Выкл. именения" : "Вкл. именения");
+    QAction* chosen = menu.exec(event->screenPos());
+    if (chosen == act)
+    {
+        setResizable(!m_resizable);
+    }
+    event->accept();
+}
+
 void ResizableRectItem::handleMoved(int handleIndex, const QPointF& scenePos)
 {
+    if (!m_resizable)
+    {
+        return;
+    }
+
     if (handleIndex < 0 || handleIndex >= HandleCount || !scene())
     {
         return;
@@ -73,6 +111,7 @@ void ResizableRectItem::initHandles()
         h->setParentItem(this);
         connect(h, &ResizeHandle::moved, this, [this](int idx, const QPointF& p) { handleMoved(idx, p); });
         m_handles[i] = h;
+        h->setVisible(m_resizable);
     }
 }
 

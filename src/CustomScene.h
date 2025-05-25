@@ -16,6 +16,12 @@ public:
 protected:
     void contextMenuEvent(QGraphicsSceneContextMenuEvent* event) override
     {
+        QGraphicsScene::contextMenuEvent(event);
+        if (event->isAccepted())
+        {
+            return;
+        }
+
         QMenu    menu;
         QAction* actButton = menu.addAction("Добавить кнопку");
         QAction* actDiode  = menu.addAction("Добавить диод");

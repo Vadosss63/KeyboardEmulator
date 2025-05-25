@@ -10,34 +10,18 @@
 class DiodeItem : public ResizableRectItem
 {
 public:
-    DiodeItem(qreal x, qreal y, qreal w = 80, qreal h = 80, QGraphicsItem* parent = nullptr)
-        : ResizableRectItem(x, y, w, h, parent)
-    {
-        setPen(QPen(Qt::red, 2));
-        setBrush(QBrush(Qt::yellow, Qt::SolidPattern));
-    }
+    DiodeItem(qreal x, qreal y, qreal w = 80, qreal h = 80, QGraphicsItem* parent = nullptr);
 
 protected:
-    void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget) override
-    {
-        Q_UNUSED(widget);
-        painter->setPen(pen());
+    void         paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget) override;
+    QPainterPath shape() const override;
 
-        if (option->state & QStyle::State_Selected)
-        {
-            QPen newPen = pen();
-            newPen.setStyle(Qt::DashLine);
-            painter->setPen(newPen);
-        }
+    void mousePressEvent(QGraphicsSceneMouseEvent* event) override;
 
-        painter->setBrush(brush());
-        painter->drawEllipse(rect());
-    }
+private:
+    void updateAppearance();
 
-    QPainterPath shape() const override
-    {
-        QPainterPath path;
-        path.addEllipse(rect());
-        return path;
-    }
+    bool   m_active;
+    QBrush m_offBrush;
+    QBrush m_onBrush;
 };
