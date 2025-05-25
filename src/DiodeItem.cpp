@@ -10,7 +10,7 @@ DiodeItem::DiodeItem(qreal x, qreal y, qreal w, qreal h, QGraphicsItem* parent) 
     onColor.setAlphaF(0.3);
     m_onBrush = QBrush(onColor);
 
-    QPen pen(Qt::red, 2);
+    QPen pen(m_offColor, 2);
     setPen(pen);
 
     setBrush(m_offBrush);
@@ -50,5 +50,6 @@ void DiodeItem::mousePressEvent(QGraphicsSceneMouseEvent* event)
 void DiodeItem::updateAppearance()
 {
     setBrush(m_active ? m_onBrush : m_offBrush);
+    setPen(QPen(m_active ? m_onColor : m_offColor, 2));
     update();
 }
