@@ -19,7 +19,7 @@ QVariant ResizableRectItem::itemChange(GraphicsItemChange change, const QVariant
         return v;
     }
 
-    if (change == ItemSceneChange && scene() || change == ItemPositionChange || change == ItemTransformChange)
+    if (change == ItemSceneChange || change == ItemPositionChange || change == ItemTransformChange)
     {
         updateHandles();
     }
@@ -34,35 +34,33 @@ void ResizableRectItem::handleMoved(int handleIndex, const QPointF& scenePos)
         return;
     }
 
-    QRectF r = rect();
+    const QRectF& r = rect();
 
-    QPointF tlScene = mapToScene(r.topLeft());
-    QPointF brScene = mapToScene(r.bottomRight());
+    QPointF tlScene = r.topLeft();
+    QPointF brScene = r.bottomRight();
+
+    QRectF newRect = QRectF(tlScene, brScene);
 
     if (handleIndex == TopLeft)
     {
-        tlScene = scenePos;
+        newRect.setTopLeft(scenePos);
     }
     else if (handleIndex == BottomRight)
     {
-        brScene = scenePos;
+        newRect.setBottomRight(scenePos);
     }
     else if (handleIndex == TopRight)
     {
-        tlScene.setY(brScene.y());
-        brScene.setX(scenePos.x());
-        tlScene.setX(scenePos.x() - r.width());
-        brScene.setY(scenePos.y());
+        newRect.setTopRight(scenePos);
     }
     else if (handleIndex == BottomLeft)
     {
-        tlScene.setX(scenePos.x());
-        brScene.setY(scenePos.y());
+        newRect.setBottomLeft(scenePos);
     }
 
     prepareGeometryChange();
-    QRectF newRect = QRectF(mapFromScene(tlScene), mapFromScene(brScene)).normalized();
-    setRect(newRect);
+
+    setRect(newRect.normalized());
 
     updateHandles();
 }
@@ -80,17 +78,15 @@ void ResizableRectItem::initHandles()
 
 void ResizableRectItem::updateHandles()
 {
-    QRectF r = rect();
+    const QRectF& r = rect();
 
     static constexpr QPointF factors[HandleCount] = {{0, 0}, {1, 0}, {1, 1}, {0, 1}};
 
     for (int i = 0; i < HandleCount; ++i)
     {
-        QPointF localPt  = r.topLeft() + QPointF(r.width() * factors[i].x(), r.height() * factors[i].y());
-        QPointF scenePt  = mapToScene(localPt);
-        QPointF parentPt = mapFromScene(scenePt) - QPointF(4, 4);
+        QPointF newHandlerPos = r.topLeft() + QPointF(r.width() * factors[i].x(), r.height() * factors[i].y());
 
         QSignalBlocker blocker(m_handles[i]);
-        m_handles[i]->setPos(parentPt);
+        m_handles[i]->setPos(newHandlerPos);
     }
 }

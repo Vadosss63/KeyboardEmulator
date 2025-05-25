@@ -41,5 +41,4 @@ void MainWindow::setupScene()
 {
     scene->setBackgroundBrush(Qt::lightGray);
     view->setRenderHint(QPainter::Antialiasing);
-    view->setDragMode(QGraphicsView::RubberBandDrag);
 }
