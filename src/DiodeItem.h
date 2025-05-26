@@ -2,16 +2,23 @@
 
 #include <QBrush>
 #include <QColor>
+#include <QMenu>
 #include <QPainter>
 #include <QPen>
 #include <QStyleOptionGraphicsItem>
+#include <cstdint>
 
 #include "ResizableRectItem.h"
 
 class DiodeItem : public ResizableRectItem
 {
+    Q_OBJECT
 public:
     DiodeItem(qreal x, qreal y, qreal w = 80, qreal h = 80, QGraphicsItem* parent = nullptr);
+
+signals:
+    void pinAssigned(uint8_t pin);
+    void inversionChanged(bool inverted);
 
 protected:
     void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget) override;
@@ -19,15 +26,20 @@ protected:
     QPainterPath shape() const override;
 
     void mousePressEvent(QGraphicsSceneMouseEvent* event) override;
+    void extendContextMenu(QMenu& menu) override;
+    bool handleDerivedContextMenuAction(QAction* action) override;
 
 private:
     void updateAppearance();
+    void showConfigMenu(const QPoint& screenPos);
 
     bool m_active = false;
 
     QBrush m_offBrush;
     QBrush m_onBrush;
-
     QColor m_offColor{Qt::gray};
     QColor m_onColor{Qt::green};
+
+    uint8_t m_pin      = 0;
+    bool    m_inverted = false;
 };

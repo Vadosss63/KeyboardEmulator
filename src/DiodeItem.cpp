@@ -1,18 +1,21 @@
 #include "DiodeItem.h"
 
+#include <QAction>
+#include <QCursor>
+#include <QDebug>
+#include <QGraphicsSceneMouseEvent>
+
 DiodeItem::DiodeItem(qreal x, qreal y, qreal w, qreal h, QGraphicsItem* parent) : ResizableRectItem(x, y, w, h, parent)
 {
-    QColor offColor(Qt::gray);
+    QColor offColor = m_offColor;
     offColor.setAlphaF(0.3);
     m_offBrush = QBrush(offColor);
 
-    QColor onColor(Qt::green);
+    QColor onColor = m_onColor;
     onColor.setAlphaF(0.3);
     m_onBrush = QBrush(onColor);
 
-    QPen pen(m_offColor, 2);
-    setPen(pen);
-
+    setPen(QPen(m_offColor, 2));
     setBrush(m_offBrush);
 }
 
@@ -20,14 +23,12 @@ void DiodeItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option,
 {
     Q_UNUSED(widget);
     painter->setPen(pen());
-
     if (option->state & QStyle::State_Selected)
     {
-        QPen newPen = pen();
-        newPen.setStyle(Qt::DashLine);
-        painter->setPen(newPen);
+        QPen selPen = pen();
+        selPen.setStyle(Qt::DashLine);
+        painter->setPen(selPen);
     }
-
     painter->setBrush(brush());
     painter->drawEllipse(rect());
 }
@@ -43,13 +44,86 @@ void DiodeItem::mousePressEvent(QGraphicsSceneMouseEvent* event)
 {
     m_active = !m_active;
     updateAppearance();
-
     ResizableRectItem::mousePressEvent(event);
+}
+
+void DiodeItem::extendContextMenu(QMenu& menu)
+{
+    QAction* cfg = menu.addAction(tr("Настроить светодиод"));
+    cfg->setData(QStringLiteral("diode_config"));
+}
+
+bool DiodeItem::handleDerivedContextMenuAction(QAction* action)
+{
+    if (action->data().toString() == QLatin1String("diode_config"))
+    {
+        showConfigMenu(QCursor::pos());
+        return true;
+    }
+    return false;
+}
+
+void DiodeItem::showConfigMenu(const QPoint& screenPos)
+{
+    QMenu  menu;
+    QMenu* pinMenu = menu.addMenu(tr("Set Pin"));
+    QMenu* invMenu = menu.addMenu(tr("Inversion"));
+
+    // Pin selection 1..15
+    for (uint8_t i = 1; i <= 15; ++i)
+    {
+        QAction* act = pinMenu->addAction(QString::number(i));
+        connect(act,
+                &QAction::triggered,
+                this,
+                [this, i]()
+                {
+                    m_pin = i;
+                    qDebug() << "DiodeItem: Pin set to" << i;
+                    emit pinAssigned(m_pin);
+                });
+    }
+
+    // Inversion toggle
+    QAction* invOn  = invMenu->addAction(tr("Non-inverted"));
+    QAction* invOff = invMenu->addAction(tr("Inverted"));
+    invOn->setData(QVariant(false));
+    invOff->setData(QVariant(true));
+    connect(invOn,
+            &QAction::triggered,
+            this,
+            [this]()
+            {
+                m_inverted = false;
+                qDebug() << "DiodeItem: Non-inverted";
+                emit inversionChanged(m_inverted);
+            });
+    connect(invOff,
+            &QAction::triggered,
+            this,
+            [this]()
+            {
+                m_inverted = true;
+                qDebug() << "DiodeItem: Inverted";
+                emit inversionChanged(m_inverted);
+            });
+
+    // Show current settings
+    menu.addSeparator();
+    QAction* title = menu.addAction(tr("Current:"));
+    title->setEnabled(false);
+    QAction* pinAct = menu.addAction(tr("Pin: %1").arg(m_pin));
+    pinAct->setEnabled(false);
+    QAction* invAct = menu.addAction(tr("Inverted: %1").arg(m_inverted));
+    invAct->setEnabled(false);
+
+    menu.exec(screenPos);
 }
 
 void DiodeItem::updateAppearance()
 {
     setBrush(m_active ? m_onBrush : m_offBrush);
-    setPen(QPen(m_active ? m_onColor : m_offColor, 2));
+    QColor color = m_active ? m_onColor : m_offColor;
+    setPen(QPen(color, 2));
     update();
 }
