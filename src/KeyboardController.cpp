@@ -15,7 +15,7 @@ KeyboardController::KeyboardController(SerialPortModel* model, MainWindow* view,
     connect(m_model, &SerialPortModel::modeRunEntered, this, &KeyboardController::onModeRunEntered);
     connect(m_model, &SerialPortModel::statusReceived, this, &KeyboardController::onStatusReceived);
 
-    // View -> Controller 
+    // View -> Controller
     connect(m_view, &MainWindow::appButtonPressed, this, &KeyboardController::handleAppButtonPressed);
     connect(m_view, &MainWindow::appButtonReleased, this, &KeyboardController::handleAppButtonReleased);
     connect(m_view, &MainWindow::appEnterModeCheck, this, &KeyboardController::handleAppEnterModeCheck);

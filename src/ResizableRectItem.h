@@ -4,6 +4,8 @@
 #include <QObject>
 #include <array>
 
+class QAction;
+
 class ResizeHandle;
 
 class ResizableRectItem : public QObject, public QGraphicsRectItem
@@ -27,6 +29,9 @@ protected:
     QVariant itemChange(GraphicsItemChange change, const QVariant& value) override;
 
     void contextMenuEvent(QGraphicsSceneContextMenuEvent* event) override;
+
+    virtual void extendContextMenu(QMenu& /*menu*/);
+    virtual bool handleDerivedContextMenuAction(QAction* /*action*/);
 
 private slots:
     void handleMoved(int handleIndex, const QPointF& scenePos);

@@ -50,14 +50,27 @@ QVariant ResizableRectItem::itemChange(GraphicsItemChange change, const QVariant
 
 void ResizableRectItem::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
 {
-    QMenu    menu;
-    QAction* act    = menu.addAction(m_resizable ? "Выкл. именения" : "Вкл. именения");
+    QMenu menu;
+    QAction* toggleResize = menu.addAction(m_resizable ? tr("Выкл. изменения") : tr("Вкл. изменения"));
+
+    extendContextMenu(menu);
+
     QAction* chosen = menu.exec(event->screenPos());
-    if (chosen == act)
+    if (chosen == toggleResize)
     {
         setResizable(!m_resizable);
     }
+    else if (!handleDerivedContextMenuAction(chosen))
+    {
+    }
     event->accept();
+}
+
+void ResizableRectItem::extendContextMenu(QMenu&) {}
+
+bool ResizableRectItem::handleDerivedContextMenuAction(QAction*)
+{
+    return false;
 }
 
 void ResizableRectItem::handleMoved(int handleIndex, const QPointF& scenePos)
