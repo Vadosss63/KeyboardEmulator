@@ -19,6 +19,19 @@ DiodeItem::DiodeItem(qreal x, qreal y, qreal w, qreal h, QGraphicsItem* parent) 
     setBrush(m_offBrush);
 }
 
+void DiodeItem::onStatusUpdate(uint8_t pin, bool isOn)
+{
+    if (pin != m_pin)
+    {
+        return;
+    }
+
+    bool actualState = m_inverted ? !isOn : isOn;
+    m_active         = actualState;
+
+    updateAppearance();
+}
+
 void DiodeItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget)
 {
     Q_UNUSED(widget);

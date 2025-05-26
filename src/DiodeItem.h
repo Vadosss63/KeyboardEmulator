@@ -16,6 +16,9 @@ class DiodeItem : public ResizableRectItem
 public:
     DiodeItem(qreal x, qreal y, qreal w = 80, qreal h = 80, QGraphicsItem* parent = nullptr);
 
+public slots:
+    void onStatusUpdate(uint8_t pin, bool isOn);
+
 signals:
     void pinAssigned(uint8_t pin);
     void inversionChanged(bool inverted);

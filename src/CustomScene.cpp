@@ -2,9 +2,6 @@
 
 #include <QMenu>
 
-#include "ButtonItem.h"
-#include "DiodeItem.h"
-
 CustomScene::CustomScene(QObject* parent) : QGraphicsScene(parent) {}
 
 void CustomScene::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
@@ -31,11 +28,13 @@ void CustomScene::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
     {
         auto* btn = new ButtonItem(pos.x(), pos.y());
         addItem(btn);
+        buttonAdded(btn);
     }
     else if (chosen == actDiode)
     {
         auto* d = new DiodeItem(pos.x(), pos.y());
         addItem(d);
+        diodeAdded(d);
     }
 
     event->accept();

@@ -22,6 +22,8 @@ signals:
     void appEnterModeRun();
     void comPortSelected(const QString& portName);
 
+    void updateDiodeStatus(uint8_t pin, bool isOn);
+
 public slots:
     // Controller → View
     void markButtonPressed(uint8_t pin1, uint8_t pin2);
@@ -29,6 +31,9 @@ public slots:
     void enterCheckMode();
     void enterRunMode();
     void updateStatus(uint8_t status, uint8_t pin1, uint8_t pin2, const QVector<uint8_t>& leds);
+
+    void addDiodeItem(DiodeItem* diode);
+    void addButtonItem(ButtonItem* button);
 
 private:
     void setupScene();

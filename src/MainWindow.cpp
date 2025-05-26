@@ -23,6 +23,9 @@ MainWindow::MainWindow(QWidget* parent)
         defaultItem->setZValue(-1);
         scene->addItem(defaultItem);
     }
+
+    connect(scene, &CustomScene::diodeAdded, this, &MainWindow::addDiodeItem);
+    connect(scene, &CustomScene::buttonAdded, this, &MainWindow::addButtonItem);
 }
 
 void MainWindow::setupScene()
@@ -86,8 +89,6 @@ void MainWindow::refreshComPorts()
     }
 }
 
-// === Слоты Controller → View ===
-
 void MainWindow::markButtonPressed(uint8_t pin1, uint8_t pin2)
 {
     qDebug() << "View: button pressed on pins" << pin1 << pin2;
@@ -115,5 +116,16 @@ void MainWindow::enterRunMode()
 void MainWindow::updateStatus(uint8_t status, uint8_t pin1, uint8_t pin2, const QVector<uint8_t>& leds)
 {
     qDebug() << "Status=" << status << "pins:" << pin1 << pin2 << "LEDs:" << leds;
-    // TODO: обновить состояние DiodeItem в сцене по массиву leds
+
+    for (int i = 0; i < leds.size(); ++i)
+    {
+        emit updateDiodeStatus(i, leds[i]);
+    }
 }
+
+void MainWindow::addDiodeItem(DiodeItem* diode)
+{
+    connect(this, &MainWindow::updateDiodeStatus, diode, &DiodeItem::onStatusUpdate);
+}
+
+void MainWindow::addButtonItem(ButtonItem* button) {}
