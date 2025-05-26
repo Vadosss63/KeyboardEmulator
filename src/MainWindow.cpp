@@ -1,9 +1,11 @@
 #include "MainWindow.h"
 
 #include <QAction>
+#include <QDebug>
 #include <QFileDialog>
 #include <QGraphicsPixmapItem>
-#include <QGraphicsRectItem>
+#include <QMenuBar>
+#include <QSerialPortInfo>
 #include <QToolBar>
 
 MainWindow::MainWindow(QWidget* parent)
@@ -11,7 +13,10 @@ MainWindow::MainWindow(QWidget* parent)
 {
     setCentralWidget(view);
     setupScene();
+    setupToolbar();
+    setupMenus();
 
+    // Загрузка дефолтного изображения
     QPixmap defaultPix(":/resources/keyboard.png");
     if (!defaultPix.isNull())
     {
@@ -19,10 +24,21 @@ MainWindow::MainWindow(QWidget* parent)
         defaultItem->setZValue(-1);
         scene->addItem(defaultItem);
     }
+}
 
-    auto*    tb      = addToolBar("File");
-    QAction* loadImg = tb->addAction("Load Keyboard...");
-    connect(loadImg,
+void MainWindow::setupScene()
+{
+    scene->setBackgroundBrush(Qt::lightGray);
+    view->setRenderHint(QPainter::Antialiasing);
+    view->setDragMode(QGraphicsView::RubberBandDrag);
+}
+
+void MainWindow::setupToolbar()
+{
+    auto* tb = addToolBar("File");
+
+    loadImgAction = tb->addAction("Загрузка изображения");
+    connect(loadImgAction,
             &QAction::triggered,
             [this]()
             {
@@ -31,14 +47,75 @@ MainWindow::MainWindow(QWidget* parent)
                 {
                     scene->clear();
                     auto* pix = new QGraphicsPixmapItem(QPixmap(path));
-                    scene->addItem(pix);
                     pix->setZValue(-1);
+                    scene->addItem(pix);
                 }
             });
+
+    modeCheckAction = tb->addAction("Проверка клавиатуры");
+    connect(modeCheckAction, &QAction::triggered, this, &MainWindow::appEnterModeCheck);
+
+    modeRunAction = tb->addAction("Режим работы");
+    connect(modeRunAction, &QAction::triggered, this, &MainWindow::appEnterModeRun);
 }
 
-void MainWindow::setupScene()
+void MainWindow::setupMenus()
 {
-    scene->setBackgroundBrush(Qt::lightGray);
-    view->setRenderHint(QPainter::Antialiasing);
+    comMenu = menuBar()->addMenu(tr("COM Port"));
+    connect(comMenu, &QMenu::aboutToShow, this, &MainWindow::refreshComPorts);
+}
+
+void MainWindow::refreshComPorts()
+{
+    comMenu->clear();
+    const auto ports = QSerialPortInfo::availablePorts();
+    for (const QSerialPortInfo& info : ports)
+    {
+        const QString name = info.portName();
+        QAction*      act  = comMenu->addAction(name);
+        connect(act,
+                &QAction::triggered,
+                this,
+                [this, name]()
+                {
+                    qDebug() << "Selected COM port:" << name;
+                    emit comPortSelected(name);
+                });
+    }
+    if (ports.isEmpty())
+    {
+        comMenu->addAction(tr("No ports found"))->setEnabled(false);
+    }
+}
+
+// === Слоты Controller → View ===
+
+void MainWindow::markButtonPressed(uint8_t pin1, uint8_t pin2)
+{
+    qDebug() << "View: button pressed on pins" << pin1 << pin2;
+    // TODO: найти ButtonItem по pin1/pin2 и вызвать updateAppearance(true)
+}
+
+void MainWindow::markButtonReleased(uint8_t pin1, uint8_t pin2)
+{
+    qDebug() << "View: button released on pins" << pin1 << pin2;
+    // TODO: найти ButtonItem и снять выделение
+}
+
+void MainWindow::enterCheckMode()
+{
+    qDebug() << "View: entered CHECK mode";
+    // TODO: визуально отметить режим проверки
+}
+
+void MainWindow::enterRunMode()
+{
+    qDebug() << "View: entered RUN mode";
+    // TODO: сбросить визуальные подсказки
+}
+
+void MainWindow::updateStatus(uint8_t status, uint8_t pin1, uint8_t pin2, const QVector<uint8_t>& leds)
+{
+    qDebug() << "Status=" << status << "pins:" << pin1 << pin2 << "LEDs:" << leds;
+    // TODO: обновить состояние DiodeItem в сцене по массиву leds
 }
