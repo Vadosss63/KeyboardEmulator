@@ -16,7 +16,6 @@ MainWindow::MainWindow(QWidget* parent)
     setupToolbar();
     setupMenus();
 
-    // Загрузка дефолтного изображения
     QPixmap defaultPix(":/resources/keyboard.png");
     if (!defaultPix.isNull())
     {
@@ -30,7 +29,6 @@ void MainWindow::setupScene()
 {
     scene->setBackgroundBrush(Qt::lightGray);
     view->setRenderHint(QPainter::Antialiasing);
-    view->setDragMode(QGraphicsView::RubberBandDrag);
 }
 
 void MainWindow::setupToolbar()

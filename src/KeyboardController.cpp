@@ -15,14 +15,14 @@ KeyboardController::KeyboardController(SerialPortModel* model, MainWindow* view,
     connect(m_model, &SerialPortModel::modeRunEntered, this, &KeyboardController::onModeRunEntered);
     connect(m_model, &SerialPortModel::statusReceived, this, &KeyboardController::onStatusReceived);
 
-    // View -> Controller slots (MainWindow должен определить эти сигналы)
+    // View -> Controller 
     connect(m_view, &MainWindow::appButtonPressed, this, &KeyboardController::handleAppButtonPressed);
     connect(m_view, &MainWindow::appButtonReleased, this, &KeyboardController::handleAppButtonReleased);
     connect(m_view, &MainWindow::appEnterModeCheck, this, &KeyboardController::handleAppEnterModeCheck);
     connect(m_view, &MainWindow::appEnterModeRun, this, &KeyboardController::handleAppEnterModeRun);
 }
 
-// Обработчики Model -> update View
+// Handlers Model -> update View
 void KeyboardController::onButtonPressed(uint8_t pin1, uint8_t pin2)
 {
     m_view->markButtonPressed(pin1, pin2);
@@ -44,7 +44,7 @@ void KeyboardController::onStatusReceived(uint8_t status, uint8_t pin1, uint8_t 
     m_view->updateStatus(status, pin1, pin2, leds);
 }
 
-// Обработчики View -> send to Model
+// Handlers View -> send to Model
 void KeyboardController::handleAppButtonPressed(uint8_t pin1, uint8_t pin2)
 {
     m_model->sendCommand(CMD_BTN_PRESSED, pin1, pin2);

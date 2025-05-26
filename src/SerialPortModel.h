@@ -37,6 +37,8 @@ private slots:
 private:
     void processBuffer();
 
+    void parsePacket(QByteArray& frame);
+
     QSerialPort* m_serial;
     QByteArray   m_buffer;
 };
