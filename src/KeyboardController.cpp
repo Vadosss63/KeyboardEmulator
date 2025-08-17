@@ -20,6 +20,8 @@ KeyboardController::KeyboardController(SerialPortModel* model, MainWindow* view,
     connect(m_view, &MainWindow::appButtonReleased, this, &KeyboardController::handleAppButtonReleased);
     connect(m_view, &MainWindow::appEnterModeCheck, this, &KeyboardController::handleAppEnterModeCheck);
     connect(m_view, &MainWindow::appEnterModeRun, this, &KeyboardController::handleAppEnterModeRun);
+
+    connect(m_view, &MainWindow::comPortSelected, [this](const QString& portName) { m_model->openPort(portName); });
 }
 
 // Handlers Model -> update View

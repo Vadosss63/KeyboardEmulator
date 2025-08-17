@@ -12,6 +12,11 @@ SerialPortModel::~SerialPortModel()
 
 bool SerialPortModel::openPort(const QString& portName, int baudRate)
 {
+    if (m_serial->isOpen())
+    {
+        closePort();
+    }
+
     m_serial->setPortName(portName);
     m_serial->setBaudRate(baudRate);
     m_serial->setDataBits(QSerialPort::Data8);

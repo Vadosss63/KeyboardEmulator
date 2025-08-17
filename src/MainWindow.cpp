@@ -73,16 +73,36 @@ void MainWindow::refreshComPorts()
     for (const QSerialPortInfo& info : ports)
     {
         const QString name = info.portName();
-        QAction*      act  = comMenu->addAction(name);
+
+        QAction* act = comMenu->addAction(name);
+
         connect(act,
                 &QAction::triggered,
-                this,
                 [this, name]()
                 {
                     qDebug() << "Selected COM port:" << name;
                     emit comPortSelected(name);
                 });
     }
+
+    {
+        // For testing purposes, add a dummy action
+        // This should be removed in production code
+        // It simulates a port selection for testing without actual hardware
+
+        QString testPortName = "/tmp/ttyV1";
+
+        QAction* actTest = comMenu->addAction(testPortName);
+
+        connect(actTest,
+                &QAction::triggered,
+                [this, testPortName]()
+                {
+                    qDebug() << "Selected COM port:" << testPortName;
+                    emit comPortSelected(testPortName);
+                });
+    }
+
     if (ports.isEmpty())
     {
         comMenu->addAction(tr("No ports found"))->setEnabled(false);
