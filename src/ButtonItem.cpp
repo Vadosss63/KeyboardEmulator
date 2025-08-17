@@ -62,6 +62,17 @@ void ButtonItem::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
     event->accept();
 }
 
+void ButtonItem::onStatusUpdate(uint8_t pin1, uint8_t pin2, bool isPressed)
+{
+    if (m_pin1 != pin1 || m_pin2 != pin2)
+    {
+        return;
+    }
+
+    m_active = isPressed;
+    updateAppearance();
+}
+
 void ButtonItem::extendContextMenu(QMenu& menu)
 {
     QAction* cfg = menu.addAction(tr("Настроить выводы"));

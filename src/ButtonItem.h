@@ -18,6 +18,9 @@ signals:
     void buttonPressed(uint8_t pin1, uint8_t pin2);
     void buttonReleased(uint8_t pin1, uint8_t pin2);
 
+public slots:
+    void onStatusUpdate(uint8_t pin1, uint8_t pin2, bool isPressed);
+
 protected:
     void mousePressEvent(QGraphicsSceneMouseEvent* event) override;
     void mouseReleaseEvent(QGraphicsSceneMouseEvent* event) override;

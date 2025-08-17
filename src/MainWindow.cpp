@@ -112,13 +112,13 @@ void MainWindow::refreshComPorts()
 void MainWindow::markButtonPressed(uint8_t pin1, uint8_t pin2)
 {
     qDebug() << "View: button pressed on pins" << pin1 << pin2;
-    // TODO: найти ButtonItem по pin1/pin2 и вызвать updateAppearance(true)
+    updateButtonStatus(pin1, pin2, true);
 }
 
 void MainWindow::markButtonReleased(uint8_t pin1, uint8_t pin2)
 {
     qDebug() << "View: button released on pins" << pin1 << pin2;
-    // TODO: найти ButtonItem и снять выделение
+    updateButtonStatus(pin1, pin2, false);
 }
 
 void MainWindow::enterCheckMode()
@@ -152,4 +152,5 @@ void MainWindow::addButtonItem(ButtonItem* button)
 {
     connect(button, &ButtonItem::buttonPressed, this, &MainWindow::appButtonPressed);
     connect(button, &ButtonItem::buttonReleased, this, &MainWindow::appButtonReleased);
+    connect(this, &MainWindow::updateButtonStatus, button, &ButtonItem::onStatusUpdate);
 }

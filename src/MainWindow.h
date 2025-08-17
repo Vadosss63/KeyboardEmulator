@@ -24,6 +24,8 @@ signals:
 
     void updateDiodeStatus(uint8_t pin, bool isOn);
 
+    void updateButtonStatus(uint8_t pin1, uint8_t pin2, bool isPressed);
+
 public slots:
     // Controller → View
     void markButtonPressed(uint8_t pin1, uint8_t pin2);
