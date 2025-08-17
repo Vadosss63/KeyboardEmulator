@@ -18,7 +18,7 @@ void ResizableRectItem::setResizable(bool on)
 
     if (on)
     {
-        setFlags(ItemIsSelectable | ItemIsMovable | ItemSendsGeometryChanges);
+        setFlags(ItemIsMovable | ItemSendsGeometryChanges);
     }
     else
     {
@@ -121,7 +121,7 @@ void ResizableRectItem::initHandles()
     for (int i = 0; i < HandleCount; i++)
     {
         auto* h = new ResizeHandle(this, i);
-        h->setParentItem(this);
+        // h->setParentItem(this);
         connect(h, &ResizeHandle::moved, this, [this](int idx, const QPointF& p) { handleMoved(idx, p); });
         m_handles[i] = h;
         h->setVisible(m_resizable);

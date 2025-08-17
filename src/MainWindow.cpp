@@ -128,4 +128,8 @@ void MainWindow::addDiodeItem(DiodeItem* diode)
     connect(this, &MainWindow::updateDiodeStatus, diode, &DiodeItem::onStatusUpdate);
 }
 
-void MainWindow::addButtonItem(ButtonItem* button) {}
+void MainWindow::addButtonItem(ButtonItem* button)
+{
+    connect(button, &ButtonItem::buttonPressed, this, &MainWindow::appButtonPressed);
+    connect(button, &ButtonItem::buttonReleased, this, &MainWindow::appButtonReleased);
+}

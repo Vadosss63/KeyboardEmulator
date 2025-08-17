@@ -15,9 +15,51 @@ ButtonItem::ButtonItem(qreal x, qreal y, qreal w, qreal h, QGraphicsItem* parent
 
 void ButtonItem::mousePressEvent(QGraphicsSceneMouseEvent* event)
 {
-    m_active = !m_active;
+    if (m_active)
+    {
+        event->accept();
+        return;
+    }
+
+    if (event->button() != Qt::LeftButton)
+    {
+        ResizableRectItem::mousePressEvent(event);
+        return;
+    }
+
+    m_active = true;
+
     updateAppearance();
-    ResizableRectItem::mousePressEvent(event);
+
+    emit buttonPressed(m_pin1, m_pin2);
+
+    bool ctrlPressed = event->modifiers() & Qt::ControlModifier;
+
+    if (ctrlPressed)
+    {
+        ResizableRectItem::mousePressEvent(event);
+        return;
+    }
+
+    event->accept();
+}
+
+void ButtonItem::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
+{
+    if (event->button() != Qt::LeftButton)
+    {
+        ResizableRectItem::mousePressEvent(event);
+        return;
+    }
+
+    m_active = false;
+    updateAppearance();
+
+    emit buttonReleased(m_pin1, m_pin2);
+
+    ResizableRectItem::mouseReleaseEvent(event);
+
+    event->accept();
 }
 
 void ButtonItem::extendContextMenu(QMenu& menu)

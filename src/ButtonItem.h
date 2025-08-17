@@ -15,9 +15,12 @@ public:
 
 signals:
     void pinsAssigned(uint8_t pin1, uint8_t pin2);
+    void buttonPressed(uint8_t pin1, uint8_t pin2);
+    void buttonReleased(uint8_t pin1, uint8_t pin2);
 
 protected:
     void mousePressEvent(QGraphicsSceneMouseEvent* event) override;
+    void mouseReleaseEvent(QGraphicsSceneMouseEvent* event) override;
 
     void extendContextMenu(QMenu& menu) override;
     bool handleDerivedContextMenuAction(QAction* action) override;
