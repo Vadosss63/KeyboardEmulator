@@ -27,6 +27,8 @@ jobs:
             mingw-w64-ucrt-x86_64-qt6-serialport
             mingw-w64-ucrt-x86_64-qt6-tools
             mingw-w64-ucrt-x86_64-qt6-imageformats
+            mingw-w64-ucrt-x86_64-libb2
+            mingw-w64-ucrt-x86_64-ntldd
 
       - name: Configure (CMake/Ninja)
         shell: msys2 {0}
@@ -44,11 +46,33 @@ jobs:
           EXE="build/KeyboardEmulator.exe"
           test -f "$EXE" || (echo "EXE not found: $EXE" && exit 1)
           mkdir -p build/deploy
-          # Раскладываем Qt DLL и плагины рядом с приложением
           windeployqt6 --release --dir build/deploy "$EXE"
-          # Кладём сам EXE в deploy (на случай, если windeployqt6 не скопировал его)
           cp "$EXE" build/deploy/
-          # Опционально: запаковать в zip для удобства скачивания
+
+      - name: Copy non-Qt runtime DLLs (ucrt64/bin via ntldd)
+        shell: msys2 {0}
+        run: |
+          EXE="build/KeyboardEmulator.exe"
+          DEP="build/deploy"
+          mapfile -t FILES < <(find "$DEP" -type f \( -iname "*.exe" -o -iname "*.dll" \))
+          FILES=("$EXE" "${FILES[@]}")
+
+          TMP="$DEP/.deps.txt"
+          : > "$TMP"
+
+          for f in "${FILES[@]}"; do
+            ntldd -R "$f" | awk '/\\ucrt64\\bin\\.*\.dll/ {print $3}' >> "$TMP" || true
+          done
+
+          sort -u "$TMP" | while read -r winpath; do
+            upath="$(cygpath -u "$winpath")"
+            base="$(basename "$upath")"
+            if [ ! -f "$DEP/$base" ]; then
+              cp "$upath" "$DEP/"
+            fi
+          done
+
+          # упакуем в zip
           (cd build && zip -r KeyboardEmulator-windows-ucrt64.zip deploy)
 
       - name: Upload artifact (folder)
