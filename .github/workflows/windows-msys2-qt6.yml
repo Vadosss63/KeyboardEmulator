@@ -1,0 +1,65 @@
+name: Windows Qt6 (MSYS2 UCRT64 MinGW)
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # MSYS2 + UCRT64 (современная ABI)
+      - name: Setup MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          update: true
+          msystem: UCRT64
+          install: >-
+            git
+            zip
+            mingw-w64-ucrt-x86_64-toolchain
+            mingw-w64-ucrt-x86_64-cmake
+            mingw-w64-ucrt-x86_64-ninja
+            mingw-w64-ucrt-x86_64-qt6-base
+            mingw-w64-ucrt-x86_64-qt6-serialport
+            mingw-w64-ucrt-x86_64-qt6-tools        # windeployqt6
+            mingw-w64-ucrt-x86_64-qt6-imageformats  # плагины изображений (png/jpg/svg и т.п.)
+
+      - name: Configure (CMake/Ninja)
+        shell: msys2 {0}
+        run: >
+          cmake -S . -B build -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        shell: msys2 {0}
+        run: cmake --build build --config Release --parallel
+
+      - name: Bundle with windeployqt6
+        shell: msys2 {0}
+        run: |
+          EXE="build/KeyboardEmulator.exe"
+          test -f "$EXE" || (echo "EXE not found: $EXE" && exit 1)
+          mkdir -p build/deploy
+          # Раскладываем Qt DLL и плагины рядом с приложением
+          windeployqt6 --release --dir build/deploy "$EXE"
+          # Кладём сам EXE в deploy (на случай, если windeployqt6 не скопировал его)
+          cp "$EXE" build/deploy/
+          # Опционально: запаковать в zip для удобства скачивания
+          (cd build && zip -r KeyboardEmulator-windows-ucrt64.zip deploy)
+
+      - name: Upload artifact (folder)
+        uses: actions/upload-artifact@v4
+        with:
+          name: KeyboardEmulator-windows-ucrt64
+          path: build/deploy
+
+      - name: Upload artifact (zip)
+        uses: actions/upload-artifact@v4
+        with:
+          name: KeyboardEmulator-windows-ucrt64-zip
+          path: build/KeyboardEmulator-windows-ucrt64.zip
