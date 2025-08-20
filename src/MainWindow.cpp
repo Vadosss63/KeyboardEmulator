@@ -55,9 +55,11 @@ void MainWindow::setupToolbar()
 
     modeCheckAction = tb->addAction("Проверка клавиатуры");
     connect(modeCheckAction, &QAction::triggered, this, &MainWindow::appEnterModeCheck);
+    connect(modeCheckAction, &QAction::triggered, this, &MainWindow::enterCheckMode);
 
     modeRunAction = tb->addAction("Режим работы");
     connect(modeRunAction, &QAction::triggered, this, &MainWindow::appEnterModeRun);
+    connect(modeRunAction, &QAction::triggered, this, &MainWindow::enterRunMode);
 }
 
 void MainWindow::setupMenus()
@@ -109,33 +111,19 @@ void MainWindow::refreshComPorts()
     }
 }
 
-void MainWindow::markButtonPressed(uint8_t pin1, uint8_t pin2)
-{
-    qDebug() << "View: button pressed on pins" << pin1 << pin2;
-    updateButtonStatus(pin1, pin2, true);
-}
-
-void MainWindow::markButtonReleased(uint8_t pin1, uint8_t pin2)
-{
-    qDebug() << "View: button released on pins" << pin1 << pin2;
-    updateButtonStatus(pin1, pin2, false);
-}
-
 void MainWindow::enterCheckMode()
 {
-    qDebug() << "View: entered CHECK mode";
-    // TODO: визуально отметить режим проверки
+    scene->showStatus(true);
 }
 
 void MainWindow::enterRunMode()
 {
-    qDebug() << "View: entered RUN mode";
-    // TODO: сбросить визуальные подсказки
+    scene->showStatus(false);
 }
 
 void MainWindow::updateStatus(uint8_t pin1, uint8_t pin2, const QVector<uint8_t>& leds)
 {
-    qDebug() << "Selected pins:" << pin1 << pin2 << "LEDs:" << leds;
+    scene->updateStatus(pin1, pin2, leds);
 
     for (int i = 0; i < leds.size(); ++i)
     {

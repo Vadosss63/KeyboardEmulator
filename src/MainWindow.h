@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QGraphicsView>
+#include <QLabel>
 #include <QMainWindow>
 #include <QMenu>
 #include <cstdint>
@@ -27,11 +28,9 @@ signals:
     void updateButtonStatus(uint8_t pin1, uint8_t pin2, bool isPressed);
 
 public slots:
-    // Controller → View
-    void markButtonPressed(uint8_t pin1, uint8_t pin2);
-    void markButtonReleased(uint8_t pin1, uint8_t pin2);
     void enterCheckMode();
     void enterRunMode();
+    // Controller → View
     void updateStatus(uint8_t pin1, uint8_t pin2, const QVector<uint8_t>& leds);
 
     void addDiodeItem(DiodeItem* diode);
