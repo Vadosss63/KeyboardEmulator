@@ -38,12 +38,14 @@ void SerialPortModel::sendCommand(uint8_t command, uint8_t pin1, uint8_t pin2)
 {
     App2Ctrl_Packet pkt;
     pkt.sof     = PROTOCOL_SOF;
-    pkt.length  = sizeof(pkt) - offsetof(App2Ctrl_Packet, command) + 1; // command+pin1+pin2+checksum
+    pkt.length  = sizeof(pkt) - offsetof(App2Ctrl_Packet, command); // command+pin1+pin2+checksum
     pkt.command = command;
     pkt.pin1    = pin1;
     pkt.pin2    = pin2;
-    // checksum over sof, length, command, pin1, pin2
-    pkt.checksum = calc_checksum(reinterpret_cast<uint8_t*>(&pkt), pkt.length + 2);
+    // SOF + Length + Command + Pin1 + Pin2
+    const size_t len_before_checksum = offsetof(App2Ctrl_Packet, checksum);
+
+    pkt.checksum = calc_checksum(reinterpret_cast<const uint8_t*>(&pkt), len_before_checksum);
     m_serial->write(reinterpret_cast<const char*>(&pkt), sizeof(pkt));
 }
 
