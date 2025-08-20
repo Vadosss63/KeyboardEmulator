@@ -18,6 +18,7 @@ KeyboardController::KeyboardController(SerialPortModel* model, MainWindow* view,
     connect(m_view, &MainWindow::appEnterModeRun, this, &KeyboardController::handleAppEnterModeRun);
 
     connect(m_view, &MainWindow::comPortSelected, [this](const QString& portName) { m_model->openPort(portName); });
+    connect(m_view, &MainWindow::workModeChanged, this, &KeyboardController::handleWorkModeChanged);
 }
 
 void KeyboardController::onStatusReceived(uint8_t pin1, uint8_t pin2, const QVector<uint8_t>& leds)
@@ -41,4 +42,8 @@ void KeyboardController::handleAppEnterModeCheck()
 void KeyboardController::handleAppEnterModeRun()
 {
     m_model->sendCommand(CMD_MODE_RUN);
+}
+
+void KeyboardController::handleWorkModeChanged(WorkMode mode)
+{
 }

@@ -94,9 +94,8 @@ bool ButtonItem::handleDerivedContextMenuAction(QAction* action)
     return false;
 }
 
-void ButtonItem::showPinConfigMenu(const QPoint& screenPos)
+void ButtonItem::addPinConfigMenu(QMenu& menu)
 {
-    QMenu  menu;
     QMenu* pin1Menu = menu.addMenu(tr("Set Pin 1"));
     QMenu* pin2Menu = menu.addMenu(tr("Set Pin 2"));
 
@@ -125,6 +124,17 @@ void ButtonItem::showPinConfigMenu(const QPoint& screenPos)
     }
 
     menu.addSeparator();
+}
+
+void ButtonItem::showPinConfigMenu(const QPoint& screenPos)
+{
+    QMenu menu;
+
+    if (isModifyMod())
+    {
+        addPinConfigMenu(menu);
+    }
+
     QAction* titleAct = menu.addAction(tr("Current:"));
     titleAct->setEnabled(false);
     QAction* pin1Act = menu.addAction(tr("Pin1: %1").arg(m_pin1));

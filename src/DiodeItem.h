@@ -34,6 +34,7 @@ protected:
 private:
     void updateAppearance();
     void showConfigMenu(const QPoint& screenPos);
+    void addConfigMenu(QMenu& menu);
 
     bool m_active = false;
 

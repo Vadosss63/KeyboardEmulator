@@ -8,6 +8,13 @@
 
 #include "CustomScene.h"
 
+enum class WorkMode
+{
+    Work,
+    Check,
+    Modify,
+};
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -26,6 +33,8 @@ signals:
     void updateDiodeStatus(uint8_t pin, bool isOn);
 
     void updateButtonStatus(uint8_t pin1, uint8_t pin2, bool isPressed);
+
+    void workModeChanged(WorkMode mode);
 
 public slots:
     void enterCheckMode();
@@ -48,5 +57,6 @@ private:
     QAction* loadImgAction;
     QAction* modeCheckAction;
     QAction* modeRunAction;
+    QAction* modifyAction;
     QMenu*   comMenu;
 };

@@ -31,6 +31,7 @@ protected:
 private:
     void updateAppearance();
     void showPinConfigMenu(const QPoint& screenPos);
+    void addPinConfigMenu(QMenu& menu);
 
     bool    m_active = false;
     QBrush  m_normalBrush;

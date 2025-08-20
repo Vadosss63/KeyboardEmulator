@@ -32,6 +32,11 @@ void ResizableRectItem::setResizable(bool on)
     updateHandles();
 }
 
+bool ResizableRectItem::isModifyMod() const
+{
+    return m_resizable;
+}
+
 QVariant ResizableRectItem::itemChange(GraphicsItemChange change, const QVariant& value)
 {
     QVariant v = QGraphicsRectItem::itemChange(change, value);

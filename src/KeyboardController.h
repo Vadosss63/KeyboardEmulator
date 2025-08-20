@@ -11,6 +11,8 @@ class MainWindow;
 
 class SerialPortModel;
 
+enum class WorkMode;
+
 class KeyboardController : public QObject
 {
     Q_OBJECT
@@ -25,6 +27,7 @@ private slots:
     void handleAppButtonReleased(uint8_t pin1, uint8_t pin2);
     void handleAppEnterModeCheck();
     void handleAppEnterModeRun();
+    void handleWorkModeChanged(WorkMode mode);
 
 private:
     SerialPortModel* m_model;

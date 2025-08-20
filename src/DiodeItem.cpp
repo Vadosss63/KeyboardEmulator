@@ -74,9 +74,8 @@ bool DiodeItem::handleDerivedContextMenuAction(QAction* action)
     return false;
 }
 
-void DiodeItem::showConfigMenu(const QPoint& screenPos)
+void DiodeItem::addConfigMenu(QMenu& menu)
 {
-    QMenu  menu;
     QMenu* pinMenu = menu.addMenu(tr("Set Pin"));
     QMenu* invMenu = menu.addMenu(tr("Inversion"));
 
@@ -95,7 +94,6 @@ void DiodeItem::showConfigMenu(const QPoint& screenPos)
                 });
     }
 
-    // Inversion toggle
     QAction* invOn  = invMenu->addAction(tr("Non-inverted"));
     QAction* invOff = invMenu->addAction(tr("Inverted"));
     invOn->setData(QVariant(false));
@@ -119,8 +117,18 @@ void DiodeItem::showConfigMenu(const QPoint& screenPos)
                 emit inversionChanged(m_inverted);
             });
 
-    // Show current settings
     menu.addSeparator();
+}
+
+void DiodeItem::showConfigMenu(const QPoint& screenPos)
+{
+    QMenu menu;
+
+    if (isModifyMod())
+    {
+        addConfigMenu(menu);
+    }
+
     QAction* title = menu.addAction(tr("Current:"));
     title->setEnabled(false);
     QAction* pinAct = menu.addAction(tr("Pin: %1").arg(m_pin));

@@ -33,6 +33,8 @@ protected:
     virtual void extendContextMenu(QMenu& /*menu*/);
     virtual bool handleDerivedContextMenuAction(QAction* /*action*/);
 
+    bool isModifyMod() const;
+
 private slots:
     void handleMoved(int handleIndex, const QPointF& scenePos);
 

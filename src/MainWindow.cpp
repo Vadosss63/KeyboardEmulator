@@ -36,6 +36,7 @@ void MainWindow::setupScene()
 
 void MainWindow::setupToolbar()
 {
+    /// TODO: Should be a common menu
     auto* tb = addToolBar("File");
 
     loadImgAction = tb->addAction("Загрузка изображения");
@@ -56,10 +57,15 @@ void MainWindow::setupToolbar()
     modeCheckAction = tb->addAction("Проверка клавиатуры");
     connect(modeCheckAction, &QAction::triggered, this, &MainWindow::appEnterModeCheck);
     connect(modeCheckAction, &QAction::triggered, this, &MainWindow::enterCheckMode);
+    connect(modeCheckAction, &QAction::triggered, this, [this]() { emit workModeChanged(WorkMode::Check); });
 
     modeRunAction = tb->addAction("Режим работы");
     connect(modeRunAction, &QAction::triggered, this, &MainWindow::appEnterModeRun);
     connect(modeRunAction, &QAction::triggered, this, &MainWindow::enterRunMode);
+    connect(modeRunAction, &QAction::triggered, this, [this]() { emit workModeChanged(WorkMode::Work); });
+
+    modifyAction = tb->addAction("Режим модификации");
+    connect(modifyAction, &QAction::triggered, this, [this]() { emit workModeChanged(WorkMode::Modify); });
 }
 
 void MainWindow::setupMenus()
