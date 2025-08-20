@@ -9,10 +9,6 @@ KeyboardController::KeyboardController(SerialPortModel* model, MainWindow* view,
     : QObject(parent), m_model(model), m_view(view)
 {
     // Model -> Controller slots
-    connect(m_model, &SerialPortModel::buttonPressed, this, &KeyboardController::onButtonPressed);
-    connect(m_model, &SerialPortModel::buttonReleased, this, &KeyboardController::onButtonReleased);
-    connect(m_model, &SerialPortModel::modeCheckEntered, this, &KeyboardController::onModeCheckEntered);
-    connect(m_model, &SerialPortModel::modeRunEntered, this, &KeyboardController::onModeRunEntered);
     connect(m_model, &SerialPortModel::statusReceived, this, &KeyboardController::onStatusReceived);
 
     // View -> Controller
@@ -24,26 +20,9 @@ KeyboardController::KeyboardController(SerialPortModel* model, MainWindow* view,
     connect(m_view, &MainWindow::comPortSelected, [this](const QString& portName) { m_model->openPort(portName); });
 }
 
-// Handlers Model -> update View
-void KeyboardController::onButtonPressed(uint8_t pin1, uint8_t pin2)
+void KeyboardController::onStatusReceived(uint8_t pin1, uint8_t pin2, const QVector<uint8_t>& leds)
 {
-    m_view->markButtonPressed(pin1, pin2);
-}
-void KeyboardController::onButtonReleased(uint8_t pin1, uint8_t pin2)
-{
-    m_view->markButtonReleased(pin1, pin2);
-}
-void KeyboardController::onModeCheckEntered()
-{
-    m_view->enterCheckMode();
-}
-void KeyboardController::onModeRunEntered()
-{
-    m_view->enterRunMode();
-}
-void KeyboardController::onStatusReceived(uint8_t status, uint8_t pin1, uint8_t pin2, const QVector<uint8_t>& leds)
-{
-    m_view->updateStatus(status, pin1, pin2, leds);
+    m_view->updateStatus(pin1, pin2, leds);
 }
 
 // Handlers View -> send to Model

@@ -25,11 +25,7 @@ public slots:
 
 signals:
     // Ctrl -> App
-    void buttonPressed(uint8_t pin1, uint8_t pin2);
-    void buttonReleased(uint8_t pin1, uint8_t pin2);
-    void modeCheckEntered();
-    void modeRunEntered();
-    void statusReceived(uint8_t status, uint8_t pin1, uint8_t pin2, const QVector<uint8_t>& leds);
+    void statusReceived(uint8_t pin1, uint8_t pin2, const QVector<uint8_t>& leds);
 
 private slots:
     void handleReadyRead();

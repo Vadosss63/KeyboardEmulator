@@ -12,22 +12,11 @@ extern "C"
 // Start of Frame
 #define PROTOCOL_SOF 0xAA
 
-// Status codes
-#define STATUS_OK 0x00
-#define STATUS_ERROR 0xFF
-
 // Commands: App -> Controller
 #define CMD_BTN_PRESSED 0x01
 #define CMD_BTN_RELEASED 0x02
 #define CMD_MODE_CHECK_KEYBOARD 0x03
 #define CMD_MODE_RUN 0x04
-
-// Responses: Controller -> App (ACK values)
-#define CMD_ACK_BTN_PRESSED 0x81
-#define CMD_ACK_BTN_RELEASED 0x82
-#define CMD_ACK_MODE_CHECK 0x83
-#define CMD_ACK_MODE_RUN 0x84
-#define CMD_NACK 0xE0
 
 #pragma pack(push, 1)
 
@@ -44,13 +33,11 @@ extern "C"
     } App2Ctrl_Packet;
 
     // Packet from Controller to Application
-    // Bytes: SOF | Length | Command | Status | Pin1 | Pin2 | LED[1..15] | Checksum
+    // Bytes: SOF | Length | Pin1 | Pin2 | LED[1..15] | Checksum
     typedef struct
     {
         uint8_t sof;      // PROTOCOL_SOF
         uint8_t length;   // bytes after this field up to and including checksum
-        uint8_t command;  // echo or ACK code
-        uint8_t status;   // STATUS_OK or STATUS_ERROR
         uint8_t pin1;     // current pin1 (in check mode) or 0
         uint8_t pin2;     // current pin2 (in check mode) or 0
         uint8_t leds[15]; // 0x00=off, 0x01=on for each LED
@@ -58,7 +45,6 @@ extern "C"
     } Ctrl2App_Packet;
 
 #pragma pack(pop)
-
     /**
  * @brief Calculate simple checksum: sum of bytes modulo 256
  * @param data Pointer to buffer

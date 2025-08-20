@@ -28,7 +28,6 @@ protected:
 
     QPainterPath shape() const override;
 
-    void mousePressEvent(QGraphicsSceneMouseEvent* event) override;
     void extendContextMenu(QMenu& menu) override;
     bool handleDerivedContextMenuAction(QAction* action) override;
 

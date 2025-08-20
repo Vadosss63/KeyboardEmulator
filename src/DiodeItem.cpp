@@ -53,13 +53,6 @@ QPainterPath DiodeItem::shape() const
     return path;
 }
 
-void DiodeItem::mousePressEvent(QGraphicsSceneMouseEvent* event)
-{
-    m_active = !m_active;
-    updateAppearance();
-    ResizableRectItem::mousePressEvent(event);
-}
-
 void DiodeItem::extendContextMenu(QMenu& menu)
 {
     QAction* cfg = menu.addAction(tr("Настроить светодиод"));
@@ -68,6 +61,11 @@ void DiodeItem::extendContextMenu(QMenu& menu)
 
 bool DiodeItem::handleDerivedContextMenuAction(QAction* action)
 {
+    if (!action)
+    {
+        return false;
+    }
+
     if (action->data().toString() == QLatin1String("diode_config"))
     {
         showConfigMenu(QCursor::pos());

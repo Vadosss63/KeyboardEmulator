@@ -84,39 +84,12 @@ void SerialPortModel::processBuffer()
 void SerialPortModel::parsePacket(QByteArray& frame)
 {
     const Ctrl2App_Packet* rp = reinterpret_cast<const Ctrl2App_Packet*>(frame.constData());
-    QVector<uint8_t>       leds;
+
+    QVector<uint8_t> leds;
     leds.reserve(15);
     for (int i = 0; i < 15; ++i)
     {
         leds.append(rp->leds[i]);
     }
-
-    switch (rp->command)
-    {
-        case CMD_ACK_BTN_PRESSED:
-        {
-            emit buttonPressed(rp->pin1, rp->pin2);
-            break;
-        }
-        case CMD_ACK_BTN_RELEASED:
-        {
-            emit buttonReleased(rp->pin1, rp->pin2);
-            break;
-        }
-        case CMD_ACK_MODE_CHECK:
-        {
-            emit modeCheckEntered();
-            break;
-        }
-        case CMD_ACK_MODE_RUN:
-        {
-            emit modeRunEntered();
-            break;
-        }
-        default:
-        {
-            emit statusReceived(rp->status, rp->pin1, rp->pin2, leds);
-            break;
-        }
-    }
+    emit statusReceived(rp->pin1, rp->pin2, leds);
 }

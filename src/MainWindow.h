@@ -32,7 +32,7 @@ public slots:
     void markButtonReleased(uint8_t pin1, uint8_t pin2);
     void enterCheckMode();
     void enterRunMode();
-    void updateStatus(uint8_t status, uint8_t pin1, uint8_t pin2, const QVector<uint8_t>& leds);
+    void updateStatus(uint8_t pin1, uint8_t pin2, const QVector<uint8_t>& leds);
 
     void addDiodeItem(DiodeItem* diode);
     void addButtonItem(ButtonItem* button);

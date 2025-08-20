@@ -133,13 +133,13 @@ void MainWindow::enterRunMode()
     // TODO: сбросить визуальные подсказки
 }
 
-void MainWindow::updateStatus(uint8_t status, uint8_t pin1, uint8_t pin2, const QVector<uint8_t>& leds)
+void MainWindow::updateStatus(uint8_t pin1, uint8_t pin2, const QVector<uint8_t>& leds)
 {
-    qDebug() << "Status=" << status << "pins:" << pin1 << pin2 << "LEDs:" << leds;
+    qDebug() << "Selected pins:" << pin1 << pin2 << "LEDs:" << leds;
 
     for (int i = 0; i < leds.size(); ++i)
     {
-        emit updateDiodeStatus(i, leds[i]);
+        emit updateDiodeStatus(i + 1, leds[i]);
     }
 }
 
