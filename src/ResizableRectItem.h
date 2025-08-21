@@ -31,8 +31,7 @@ protected:
 
     void contextMenuEvent(QGraphicsSceneContextMenuEvent* event) override;
 
-    virtual void extendContextMenu(QMenu& /*menu*/);
-    virtual bool handleDerivedContextMenuAction(QAction* /*action*/);
+    virtual void handleDerivedContextMenuEvent(QGraphicsSceneContextMenuEvent* event);
 
     bool isModifyMod() const;
 

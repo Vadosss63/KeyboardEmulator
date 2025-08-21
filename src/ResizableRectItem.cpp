@@ -61,20 +61,11 @@ QVariant ResizableRectItem::itemChange(GraphicsItemChange change, const QVariant
 
 void ResizableRectItem::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
 {
-    QMenu menu;
-    extendContextMenu(menu);
-
-    QAction* const chosen = menu.exec(event->screenPos());
-    handleDerivedContextMenuAction(chosen);
+    handleDerivedContextMenuEvent(event);
     event->accept();
 }
 
-void ResizableRectItem::extendContextMenu(QMenu&) {}
-
-bool ResizableRectItem::handleDerivedContextMenuAction(QAction*)
-{
-    return false;
-}
+void ResizableRectItem::handleDerivedContextMenuEvent(QGraphicsSceneContextMenuEvent* /*event*/) {}
 
 void ResizableRectItem::handleMoved(int handleIndex, const QPointF& scenePos)
 {

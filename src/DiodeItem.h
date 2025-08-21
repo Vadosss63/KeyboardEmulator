@@ -32,12 +32,10 @@ protected:
 
     QPainterPath shape() const override;
 
-    void extendContextMenu(QMenu& menu) override;
-    bool handleDerivedContextMenuAction(QAction* action) override;
+    void handleDerivedContextMenuEvent(QGraphicsSceneContextMenuEvent* event) override;
 
 private:
     void updateAppearance();
-    void showConfigMenu(const QPoint& screenPos);
     void addConfigMenu(QMenu& menu);
 
     bool m_active = false;

@@ -93,25 +93,23 @@ void ButtonItem::onStatusUpdate(uint8_t pin1, uint8_t pin2, bool isPressed)
     updateAppearance();
 }
 
-void ButtonItem::extendContextMenu(QMenu& menu)
+void ButtonItem::handleDerivedContextMenuEvent(QGraphicsSceneContextMenuEvent* event)
 {
-    QAction* cfg = menu.addAction(tr("Настроить выводы"));
-    cfg->setData(QStringLiteral("pin_config"));
-}
+    QMenu menu;
 
-bool ButtonItem::handleDerivedContextMenuAction(QAction* action)
-{
-    if (!action)
+    if (isModifyMod())
     {
-        return false;
+        addPinConfigMenu(menu);
     }
 
-    if (action->data().toString() == QLatin1String("pin_config"))
-    {
-        showPinConfigMenu(QCursor::pos());
-        return true;
-    }
-    return false;
+    QAction* titleAct = menu.addAction(tr("Current:"));
+    titleAct->setEnabled(false);
+    QAction* pin1Act = menu.addAction(tr("Pin1: %1").arg(m_pin1));
+    pin1Act->setEnabled(false);
+    QAction* pin2Act = menu.addAction(tr("Pin2: %1").arg(m_pin2));
+    pin2Act->setEnabled(false);
+
+    menu.exec(event->screenPos());
 }
 
 void ButtonItem::addPinConfigMenu(QMenu& menu)
@@ -144,25 +142,6 @@ void ButtonItem::addPinConfigMenu(QMenu& menu)
     }
 
     menu.addSeparator();
-}
-
-void ButtonItem::showPinConfigMenu(const QPoint& screenPos)
-{
-    QMenu menu;
-
-    if (isModifyMod())
-    {
-        addPinConfigMenu(menu);
-    }
-
-    QAction* titleAct = menu.addAction(tr("Current:"));
-    titleAct->setEnabled(false);
-    QAction* pin1Act = menu.addAction(tr("Pin1: %1").arg(m_pin1));
-    pin1Act->setEnabled(false);
-    QAction* pin2Act = menu.addAction(tr("Pin2: %1").arg(m_pin2));
-    pin2Act->setEnabled(false);
-
-    menu.exec(screenPos);
 }
 
 void ButtonItem::updateAppearance()

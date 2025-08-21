@@ -79,25 +79,23 @@ QPainterPath DiodeItem::shape() const
     return path;
 }
 
-void DiodeItem::extendContextMenu(QMenu& menu)
+void DiodeItem::handleDerivedContextMenuEvent(QGraphicsSceneContextMenuEvent* event)
 {
-    QAction* cfg = menu.addAction(tr("Настроить светодиод"));
-    cfg->setData(QStringLiteral("diode_config"));
-}
+    QMenu menu;
 
-bool DiodeItem::handleDerivedContextMenuAction(QAction* action)
-{
-    if (!action)
+    if (isModifyMod())
     {
-        return false;
+        addConfigMenu(menu);
     }
 
-    if (action->data().toString() == QLatin1String("diode_config"))
-    {
-        showConfigMenu(QCursor::pos());
-        return true;
-    }
-    return false;
+    QAction* title = menu.addAction(tr("Current:"));
+    title->setEnabled(false);
+    QAction* pinAct = menu.addAction(tr("Pin: %1").arg(m_pin));
+    pinAct->setEnabled(false);
+    QAction* invAct = menu.addAction(tr("Inverted: %1").arg(m_inverted));
+    invAct->setEnabled(false);
+
+    menu.exec(event->screenPos());
 }
 
 void DiodeItem::addConfigMenu(QMenu& menu)
@@ -144,25 +142,6 @@ void DiodeItem::addConfigMenu(QMenu& menu)
             });
 
     menu.addSeparator();
-}
-
-void DiodeItem::showConfigMenu(const QPoint& screenPos)
-{
-    QMenu menu;
-
-    if (isModifyMod())
-    {
-        addConfigMenu(menu);
-    }
-
-    QAction* title = menu.addAction(tr("Current:"));
-    title->setEnabled(false);
-    QAction* pinAct = menu.addAction(tr("Pin: %1").arg(m_pin));
-    pinAct->setEnabled(false);
-    QAction* invAct = menu.addAction(tr("Inverted: %1").arg(m_inverted));
-    invAct->setEnabled(false);
-
-    menu.exec(screenPos);
 }
 
 void DiodeItem::updateAppearance()

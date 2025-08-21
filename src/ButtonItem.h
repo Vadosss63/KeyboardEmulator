@@ -30,12 +30,10 @@ protected:
     void mousePressEvent(QGraphicsSceneMouseEvent* event) override;
     void mouseReleaseEvent(QGraphicsSceneMouseEvent* event) override;
 
-    void extendContextMenu(QMenu& menu) override;
-    bool handleDerivedContextMenuAction(QAction* action) override;
+    void handleDerivedContextMenuEvent(QGraphicsSceneContextMenuEvent* event) override;
 
 private:
     void updateAppearance();
-    void showPinConfigMenu(const QPoint& screenPos);
     void addPinConfigMenu(QMenu& menu);
 
     bool    m_active = false;
