@@ -1,12 +1,14 @@
 #include "MainWindow.h"
 
 #include <QAction>
+#include <QActionGroup>
 #include <QDebug>
 #include <QFileDialog>
 #include <QGraphicsPixmapItem>
 #include <QMenuBar>
 #include <QSerialPortInfo>
 #include <QToolBar>
+#include <QToolButton>
 
 #include "ProjectIO.h"
 
@@ -45,9 +47,9 @@ void MainWindow::handleNewWorkMode(WorkMode mode)
 
 void MainWindow::setupToolbar()
 {
-    /// TODO: Should be a common menu
-    auto* tb = addToolBar("File");
+    auto* tb = addToolBar("WorkMode");
 
+    /// TODO: Should be a part of modify mode
     loadImgAction = tb->addAction("Загрузка изображения");
     connect(loadImgAction,
             &QAction::triggered,
@@ -63,18 +65,81 @@ void MainWindow::setupToolbar()
                 }
             });
 
-    modeCheckAction = tb->addAction("Проверка клавиатуры");
-    connect(modeCheckAction, &QAction::triggered, this, &MainWindow::appEnterModeCheck);
-    connect(modeCheckAction, &QAction::triggered, this, &MainWindow::enterCheckMode);
-    connect(modeCheckAction, &QAction::triggered, this, [this]() { emit workModeChanged(WorkMode::Check); });
+    auto* modeMenu = new QMenu(this);
+    auto* group    = new QActionGroup(modeMenu);
+    group->setExclusive(true);
 
-    modeRunAction = tb->addAction("Режим работы");
-    connect(modeRunAction, &QAction::triggered, this, &MainWindow::appEnterModeRun);
-    connect(modeRunAction, &QAction::triggered, this, &MainWindow::enterRunMode);
-    connect(modeRunAction, &QAction::triggered, this, [this]() { emit workModeChanged(WorkMode::Work); });
+    auto* actCheck = modeMenu->addAction(tr("Проверка клавиатуры"));
+    actCheck->setCheckable(true);
+    actCheck->setData(static_cast<int>(WorkMode::Check));
+    actCheck->setActionGroup(group);
 
-    modifyAction = tb->addAction("Режим модификации");
-    connect(modifyAction, &QAction::triggered, this, [this]() { emit workModeChanged(WorkMode::Modify); });
+    auto* actRun = modeMenu->addAction(tr("Режим работы"));
+    actRun->setCheckable(true);
+    actRun->setData(static_cast<int>(WorkMode::Work));
+    actRun->setActionGroup(group);
+
+    auto* actModify = modeMenu->addAction(tr("Режим модификации"));
+    actModify->setCheckable(true);
+    actModify->setData(static_cast<int>(WorkMode::Modify));
+    actModify->setActionGroup(group);
+
+    auto* modeBtn = new QToolButton(this);
+    modeBtn->setPopupMode(QToolButton::InstantPopup);
+    modeBtn->setMenu(modeMenu);
+    modeBtn->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+
+    modeBtn->setDefaultAction(actRun);
+    actRun->setChecked(true);
+
+    tb->addWidget(modeBtn);
+
+    connect(group,
+            &QActionGroup::triggered,
+            this,
+            [this, modeBtn](QAction* act)
+            {
+                modeBtn->setDefaultAction(act);
+                const auto mode = static_cast<WorkMode>(act->data().toInt());
+                switch (mode)
+                {
+                    case WorkMode::Check:
+                    {
+                        appEnterModeCheck();
+                        enterCheckMode();
+                        break;
+                    }
+                    case WorkMode::Work:
+                    {
+                        appEnterModeRun();
+                        enterRunMode();
+                        break;
+                    }
+                    case WorkMode::Modify:
+                    {
+                        break;
+                    }
+                    default:
+                    {
+                        qDebug() << "Unrecognize mode";
+                        return;
+                    }
+                }
+                emit workModeChanged(mode);
+            });
+
+    // modeCheckAction = tb->addAction("Проверка клавиатуры");
+    // connect(modeCheckAction, &QAction::triggered, this, &MainWindow::appEnterModeCheck);
+    // connect(modeCheckAction, &QAction::triggered, this, &MainWindow::enterCheckMode);
+    // connect(modeCheckAction, &QAction::triggered, this, [this]() { emit workModeChanged(WorkMode::Check); });
+
+    // modeRunAction = tb->addAction("Режим работы");
+    // connect(modeRunAction, &QAction::triggered, this, &MainWindow::appEnterModeRun);
+    // connect(modeRunAction, &QAction::triggered, this, &MainWindow::enterRunMode);
+    // connect(modeRunAction, &QAction::triggered, this, [this]() { emit workModeChanged(WorkMode::Work); });
+
+    // modifyAction = tb->addAction("Режим модификации");
+    // connect(modifyAction, &QAction::triggered, this, [this]() { emit workModeChanged(WorkMode::Modify); });
 
     saveProjectAction = tb->addAction("Сохранить проект");
     connect(saveProjectAction, &QAction::triggered, this, &MainWindow::saveProject);

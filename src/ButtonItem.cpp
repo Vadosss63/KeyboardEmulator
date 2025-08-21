@@ -102,8 +102,6 @@ void ButtonItem::handleDerivedContextMenuEvent(QGraphicsSceneContextMenuEvent* e
         addPinConfigMenu(menu);
     }
 
-    QAction* titleAct = menu.addAction(tr("Current:"));
-    titleAct->setEnabled(false);
     QAction* pin1Act = menu.addAction(tr("Pin1: %1").arg(m_pin1));
     pin1Act->setEnabled(false);
     QAction* pin2Act = menu.addAction(tr("Pin2: %1").arg(m_pin2));

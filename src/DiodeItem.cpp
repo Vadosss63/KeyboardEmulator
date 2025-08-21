@@ -88,8 +88,6 @@ void DiodeItem::handleDerivedContextMenuEvent(QGraphicsSceneContextMenuEvent* ev
         addConfigMenu(menu);
     }
 
-    QAction* title = menu.addAction(tr("Current:"));
-    title->setEnabled(false);
     QAction* pinAct = menu.addAction(tr("Pin: %1").arg(m_pin));
     pinAct->setEnabled(false);
     QAction* invAct = menu.addAction(tr("Inverted: %1").arg(m_inverted));
