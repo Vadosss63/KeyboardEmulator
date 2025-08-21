@@ -23,6 +23,7 @@ public:
 
     ResizableRectItem(qreal x, qreal y, qreal w, qreal h, QGraphicsItem* parent = nullptr);
 
+public slots:
     void setResizable(bool on);
 
 protected:

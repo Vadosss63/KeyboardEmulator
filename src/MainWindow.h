@@ -36,6 +36,8 @@ signals:
 
     void workModeChanged(WorkMode mode);
 
+    void modifyModStatusChanged(bool isModifiable);
+
 public slots:
     void enterCheckMode();
     void enterRunMode();
@@ -44,6 +46,10 @@ public slots:
 
     void addDiodeItem(DiodeItem* diode);
     void addButtonItem(ButtonItem* button);
+    void addResizableItem(ResizableRectItem* item);
+
+private slots:
+    void handleNewWorkMode(WorkMode mode);
 
     void saveProject();
     void loadProject();
@@ -71,4 +77,7 @@ private:
     QAction* loadProjectAction;
 
     QMenu* comMenu;
+
+    /// TODO: Check initial state
+    WorkMode currentWorkMode{WorkMode::Work};
 };

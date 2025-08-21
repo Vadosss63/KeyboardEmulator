@@ -28,12 +28,19 @@ MainWindow::MainWindow(QWidget* parent)
 
     connect(scene, &CustomScene::diodeAdded, this, &MainWindow::addDiodeItem);
     connect(scene, &CustomScene::buttonAdded, this, &MainWindow::addButtonItem);
+    connect(this, &MainWindow::workModeChanged, this, &MainWindow::handleNewWorkMode);
 }
 
 void MainWindow::setupScene()
 {
     scene->setBackgroundBrush(Qt::lightGray);
     view->setRenderHint(QPainter::Antialiasing);
+}
+
+void MainWindow::handleNewWorkMode(WorkMode mode)
+{
+    currentWorkMode = mode;
+    emit modifyModStatusChanged(currentWorkMode == WorkMode::Modify);
 }
 
 void MainWindow::setupToolbar()
@@ -149,6 +156,12 @@ void MainWindow::addDiodeItem(DiodeItem* diode)
 {
     connect(this, &MainWindow::updateDiodeStatus, diode, &DiodeItem::onStatusUpdate);
     diodeItems.append(diode);
+    addResizableItem(diode);
+}
+
+void MainWindow::addResizableItem(ResizableRectItem* item)
+{
+    connect(this, &MainWindow::modifyModStatusChanged, item, &ResizableRectItem::setResizable);
 }
 
 void MainWindow::addButtonItem(ButtonItem* button)
@@ -156,6 +169,7 @@ void MainWindow::addButtonItem(ButtonItem* button)
     connect(button, &ButtonItem::buttonPressed, this, &MainWindow::appButtonPressed);
     connect(button, &ButtonItem::buttonReleased, this, &MainWindow::appButtonReleased);
     connect(this, &MainWindow::updateButtonStatus, button, &ButtonItem::onStatusUpdate);
+    addResizableItem(button);
     buttonItems.append(button);
 }
 
