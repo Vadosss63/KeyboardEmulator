@@ -39,7 +39,7 @@ DiodeItem::DiodeItem(const LedDef& def, QGraphicsItem* parent)
 LedDef DiodeItem::getDefinition() const
 {
     LedDef def;
-    def.rect     = rect();
+    def.rect     = rectItem();
     def.pin      = m_pin;
     def.inverted = m_inverted;
     return def;

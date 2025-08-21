@@ -35,6 +35,8 @@ protected:
 
     bool isModifyMod() const;
 
+    QRectF rectItem() const;
+
 private slots:
     void handleMoved(int handleIndex, const QPointF& scenePos);
 

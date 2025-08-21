@@ -37,6 +37,12 @@ bool ResizableRectItem::isModifyMod() const
     return m_resizable;
 }
 
+QRectF ResizableRectItem::rectItem() const
+{
+    QRectF rScene = mapRectToScene(rect());
+    return rScene;
+}
+
 QVariant ResizableRectItem::itemChange(GraphicsItemChange change, const QVariant& value)
 {
     QVariant v = QGraphicsRectItem::itemChange(change, value);

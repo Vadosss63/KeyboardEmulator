@@ -27,7 +27,7 @@ ButtonItem::ButtonItem(const ButtonDef& def, QGraphicsItem* parent)
 ButtonDef ButtonItem::getDefinition() const
 {
     ButtonDef def;
-    def.rect = rect();
+    def.rect = rectItem();
     def.p1   = m_pin1;
     def.p2   = m_pin2;
     return def;
