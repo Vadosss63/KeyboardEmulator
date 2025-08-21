@@ -186,7 +186,6 @@ void MainWindow::saveProject()
 
     project.background = backgroundImage.toImage();
 
-    // Save the project
     if (!ProjectIO::save(path, project, true))
     {
         qDebug() << "Failed to save project";
