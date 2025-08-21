@@ -19,6 +19,32 @@ DiodeItem::DiodeItem(qreal x, qreal y, qreal w, qreal h, QGraphicsItem* parent) 
     setBrush(m_offBrush);
 }
 
+DiodeItem::DiodeItem(const LedDef& def, QGraphicsItem* parent)
+    : ResizableRectItem(def.rect.x(), def.rect.y(), def.rect.width(), def.rect.height(), parent)
+    , m_pin(def.pin)
+    , m_inverted(def.inverted)
+{
+    QColor offColor = m_offColor;
+    offColor.setAlphaF(0.3);
+    m_offBrush = QBrush(offColor);
+
+    QColor onColor = m_onColor;
+    onColor.setAlphaF(0.3);
+    m_onBrush = QBrush(onColor);
+
+    setPen(QPen(m_offColor, 2));
+    setBrush(m_offBrush);
+}
+
+LedDef DiodeItem::getDefinition() const
+{
+    LedDef def;
+    def.rect     = rect();
+    def.pin      = m_pin;
+    def.inverted = m_inverted;
+    return def;
+}
+
 void DiodeItem::onStatusUpdate(uint8_t pin, bool isOn)
 {
     if (pin != m_pin)

@@ -13,6 +13,26 @@ ButtonItem::ButtonItem(qreal x, qreal y, qreal w, qreal h, QGraphicsItem* parent
     setBrush(m_normalBrush);
 }
 
+ButtonItem::ButtonItem(const ButtonDef& def, QGraphicsItem* parent)
+    : ResizableRectItem(def.rect.x(), def.rect.y(), def.rect.width(), def.rect.height(), parent)
+    , m_pin1(def.p1)
+    , m_pin2(def.p2)
+{
+    QPen pen(Qt::blue, 2);
+    pen.setStyle(Qt::DashLine);
+    setPen(pen);
+    setBrush(m_normalBrush);
+}
+
+ButtonDef ButtonItem::getDefinition() const
+{
+    ButtonDef def;
+    def.rect = rect();
+    def.p1   = m_pin1;
+    def.p2   = m_pin2;
+    return def;
+}
+
 void ButtonItem::mousePressEvent(QGraphicsSceneMouseEvent* event)
 {
     if (m_active)

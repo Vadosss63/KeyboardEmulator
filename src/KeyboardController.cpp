@@ -44,6 +44,4 @@ void KeyboardController::handleAppEnterModeRun()
     m_model->sendCommand(CMD_MODE_RUN);
 }
 
-void KeyboardController::handleWorkModeChanged(WorkMode mode)
-{
-}
+void KeyboardController::handleWorkModeChanged(WorkMode mode) {}

@@ -15,6 +15,8 @@ public:
     void updateStatus(uint8_t pin1, uint8_t pin2, const QVector<uint8_t>& leds);
     void showStatus(bool on);
 
+    void addStatusItem();
+
 signals:
     void diodeAdded(DiodeItem* diode);
     void buttonAdded(ButtonItem* button);

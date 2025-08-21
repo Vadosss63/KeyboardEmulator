@@ -4,9 +4,7 @@
 
 CustomScene::CustomScene(QObject* parent) : QGraphicsScene(parent)
 {
-    statusItem = addText("Status: Ready");
-    statusItem->setDefaultTextColor(Qt::red);
-    statusItem->setFont(QFont("Arial", 14));
+    addStatusItem();
 }
 
 void CustomScene::updateStatus(uint8_t pin1, uint8_t pin2, const QVector<uint8_t>& leds)
@@ -27,6 +25,13 @@ void CustomScene::updateStatus(uint8_t pin1, uint8_t pin2, const QVector<uint8_t
 void CustomScene::showStatus(bool on)
 {
     statusItem->setVisible(on);
+}
+
+void CustomScene::addStatusItem()
+{
+    statusItem = addText("Status: Ready");
+    statusItem->setDefaultTextColor(Qt::red);
+    statusItem->setFont(QFont("Arial", 14));
 }
 
 void CustomScene::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)

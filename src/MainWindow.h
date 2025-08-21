@@ -45,18 +45,30 @@ public slots:
     void addDiodeItem(DiodeItem* diode);
     void addButtonItem(ButtonItem* button);
 
+    void saveProject();
+    void loadProject();
+
 private:
     void setupScene();
     void setupToolbar();
     void setupMenus();
     void refreshComPorts();
 
+    QPixmap backgroundImage;
+
     CustomScene*   scene;
     QGraphicsView* view;
+
+    QList<DiodeItem*>  diodeItems;
+    QList<ButtonItem*> buttonItems;
 
     QAction* loadImgAction;
     QAction* modeCheckAction;
     QAction* modeRunAction;
     QAction* modifyAction;
-    QMenu*   comMenu;
+
+    QAction* saveProjectAction;
+    QAction* loadProjectAction;
+
+    QMenu* comMenu;
 };

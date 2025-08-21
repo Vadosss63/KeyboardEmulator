@@ -5,6 +5,7 @@
 #include <QPen>
 #include <cstdint>
 
+#include "Project.h"
 #include "ResizableRectItem.h"
 
 class ButtonItem : public ResizableRectItem
@@ -12,6 +13,10 @@ class ButtonItem : public ResizableRectItem
     Q_OBJECT
 public:
     ButtonItem(qreal x, qreal y, qreal w = 80, qreal h = 80, QGraphicsItem* parent = nullptr);
+
+    ButtonItem(const ButtonDef& def, QGraphicsItem* parent = nullptr);
+
+    ButtonDef getDefinition() const;
 
 signals:
     void pinsAssigned(uint8_t pin1, uint8_t pin2);

@@ -19,6 +19,10 @@ add_executable(${PROJECT_NAME} WIN32
     src/KeyboardControllerProtocol.h
     src/MainWindow.cpp
     src/MainWindow.h
+    src/Project.cpp
+    src/Project.h
+    src/ProjectIO.cpp
+    src/ProjectIO.h
     src/ResizableRectItem.cpp
     src/ResizableRectItem.h
     src/ResizeHandle.cpp

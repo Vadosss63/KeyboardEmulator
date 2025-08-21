@@ -8,6 +8,8 @@
 #include <QSerialPortInfo>
 #include <QToolBar>
 
+#include "ProjectIO.h"
+
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent), scene(new CustomScene(this)), view(new QGraphicsView(scene, this))
 {
@@ -16,10 +18,10 @@ MainWindow::MainWindow(QWidget* parent)
     setupToolbar();
     setupMenus();
 
-    QPixmap defaultPix(":/resources/keyboard.png");
-    if (!defaultPix.isNull())
+    backgroundImage.load(":/resources/keyboard.png");
+    if (!backgroundImage.isNull())
     {
-        auto* defaultItem = new QGraphicsPixmapItem(defaultPix);
+        auto* defaultItem = new QGraphicsPixmapItem(backgroundImage);
         defaultItem->setZValue(-1);
         scene->addItem(defaultItem);
     }
@@ -66,6 +68,12 @@ void MainWindow::setupToolbar()
 
     modifyAction = tb->addAction("Режим модификации");
     connect(modifyAction, &QAction::triggered, this, [this]() { emit workModeChanged(WorkMode::Modify); });
+
+    saveProjectAction = tb->addAction("Сохранить проект");
+    connect(saveProjectAction, &QAction::triggered, this, &MainWindow::saveProject);
+
+    loadProjectAction = tb->addAction("Загрузить проект");
+    connect(loadProjectAction, &QAction::triggered, this, &MainWindow::loadProject);
 }
 
 void MainWindow::setupMenus()
@@ -140,6 +148,7 @@ void MainWindow::updateStatus(uint8_t pin1, uint8_t pin2, const QVector<uint8_t>
 void MainWindow::addDiodeItem(DiodeItem* diode)
 {
     connect(this, &MainWindow::updateDiodeStatus, diode, &DiodeItem::onStatusUpdate);
+    diodeItems.append(diode);
 }
 
 void MainWindow::addButtonItem(ButtonItem* button)
@@ -147,4 +156,89 @@ void MainWindow::addButtonItem(ButtonItem* button)
     connect(button, &ButtonItem::buttonPressed, this, &MainWindow::appButtonPressed);
     connect(button, &ButtonItem::buttonReleased, this, &MainWindow::appButtonReleased);
     connect(this, &MainWindow::updateButtonStatus, button, &ButtonItem::onStatusUpdate);
+    buttonItems.append(button);
+}
+
+void MainWindow::saveProject()
+{
+    QString path = QFileDialog::getSaveFileName(this, "Save Project", {}, "Keyboard Project (*.kbk)");
+
+    if (path.isEmpty())
+    {
+        return;
+    }
+
+    if (!path.endsWith(".kbk"))
+    {
+        path += ".kbk";
+    }
+
+    Project project;
+    for (const DiodeItem* diode : diodeItems)
+    {
+        project.leds.append(diode->getDefinition());
+    }
+
+    for (const ButtonItem* button : buttonItems)
+    {
+        project.buttons.append(button->getDefinition());
+    }
+
+    project.background = backgroundImage.toImage();
+
+    // Save the project
+    if (!ProjectIO::save(path, project, true))
+    {
+        qDebug() << "Failed to save project";
+        return;
+    }
+
+    qDebug() << "Project saved successfully";
+}
+
+void MainWindow::loadProject()
+{
+    QString path = QFileDialog::getOpenFileName(this, "Load Project", {}, "Keyboard Project (*.kbk)");
+    if (path.isEmpty())
+    {
+        return;
+    }
+
+    Project project;
+    if (!ProjectIO::load(path, project))
+    {
+        qDebug() << "Failed to load project";
+        return;
+    }
+
+    // Clear current items
+    scene->clear();
+
+    diodeItems.clear();
+    buttonItems.clear();
+
+    // Restore background
+    backgroundImage = QPixmap::fromImage(project.background);
+    auto* pix       = new QGraphicsPixmapItem(backgroundImage);
+    pix->setZValue(-1);
+    scene->addItem(pix);
+    scene->addStatusItem();
+
+    // Restore LEDs
+    for (const auto& ledDef : project.leds)
+    {
+        auto* diode = new DiodeItem(ledDef);
+        scene->addItem(diode);
+        addDiodeItem(diode);
+    }
+
+    // Restore buttons
+    for (const auto& buttonDef : project.buttons)
+    {
+        auto* button = new ButtonItem(buttonDef);
+        scene->addItem(button);
+        addButtonItem(button);
+    }
+
+    qDebug() << "Project loaded successfully";
 }
