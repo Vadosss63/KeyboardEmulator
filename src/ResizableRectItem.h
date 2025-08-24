@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QGraphicsRectItem>
+#include <QGraphicsTextItem>
 #include <QObject>
 #include <array>
 
@@ -46,6 +47,8 @@ private:
     void updateHandles();
 
     bool m_resizable = false;
+
+    QGraphicsTextItem* infoItem{};
 
     std::array<ResizeHandle*, HandleCount> m_handles{};
 };

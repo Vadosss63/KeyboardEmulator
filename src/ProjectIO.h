@@ -7,6 +7,6 @@
 
 namespace ProjectIO
 {
-bool save(const QString& filePath, const Project& prj, bool withThumbnail = true);
+bool save(const QString& filePath, const Project& prj);
 bool load(const QString& filePath, Project& out);
 }

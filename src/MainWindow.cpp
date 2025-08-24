@@ -49,22 +49,6 @@ void MainWindow::setupToolbar()
 {
     auto* tb = addToolBar("WorkMode");
 
-    /// TODO: Should be a part of modify mode
-    loadImgAction = tb->addAction("Загрузка изображения");
-    connect(loadImgAction,
-            &QAction::triggered,
-            [this]()
-            {
-                QString path = QFileDialog::getOpenFileName(this, "Select Keyboard Image", {}, "Images (*.png *.jpg)");
-                if (!path.isEmpty())
-                {
-                    scene->clear();
-                    auto* pix = new QGraphicsPixmapItem(QPixmap(path));
-                    pix->setZValue(-1);
-                    scene->addItem(pix);
-                }
-            });
-
     auto* modeMenu = new QMenu(this);
     auto* group    = new QActionGroup(modeMenu);
     group->setExclusive(true);
@@ -128,24 +112,30 @@ void MainWindow::setupToolbar()
                 emit workModeChanged(mode);
             });
 
-    // modeCheckAction = tb->addAction("Проверка клавиатуры");
-    // connect(modeCheckAction, &QAction::triggered, this, &MainWindow::appEnterModeCheck);
-    // connect(modeCheckAction, &QAction::triggered, this, &MainWindow::enterCheckMode);
-    // connect(modeCheckAction, &QAction::triggered, this, [this]() { emit workModeChanged(WorkMode::Check); });
+    loadImgAction = tb->addAction("Загрузка изображения");
+    connect(loadImgAction,
+            &QAction::triggered,
+            [this]()
+            {
+                QString path = QFileDialog::getOpenFileName(this, "Select Keyboard Image", {}, "Images (*.png *.jpg)");
+                if (!path.isEmpty())
+                {
+                    scene->clear();
+                    auto* pix = new QGraphicsPixmapItem(QPixmap(path));
+                    pix->setZValue(-1);
+                    scene->addItem(pix);
+                }
+            });
 
-    // modeRunAction = tb->addAction("Режим работы");
-    // connect(modeRunAction, &QAction::triggered, this, &MainWindow::appEnterModeRun);
-    // connect(modeRunAction, &QAction::triggered, this, &MainWindow::enterRunMode);
-    // connect(modeRunAction, &QAction::triggered, this, [this]() { emit workModeChanged(WorkMode::Work); });
-
-    // modifyAction = tb->addAction("Режим модификации");
-    // connect(modifyAction, &QAction::triggered, this, [this]() { emit workModeChanged(WorkMode::Modify); });
+    connect(this, &MainWindow::modifyModStatusChanged, loadImgAction, &QAction::setVisible);
 
     saveProjectAction = tb->addAction("Сохранить проект");
     connect(saveProjectAction, &QAction::triggered, this, &MainWindow::saveProject);
+    connect(this, &MainWindow::modifyModStatusChanged, saveProjectAction, &QAction::setVisible);
 
     loadProjectAction = tb->addAction("Загрузить проект");
     connect(loadProjectAction, &QAction::triggered, this, &MainWindow::loadProject);
+    connect(this, &MainWindow::modifyModStatusChanged, loadProjectAction, &QAction::setVisible);
 }
 
 void MainWindow::setupMenus()
@@ -265,7 +255,7 @@ void MainWindow::saveProject()
 
     project.background = backgroundImage.toImage();
 
-    if (!ProjectIO::save(path, project, true))
+    if (!ProjectIO::save(path, project))
     {
         qDebug() << "Failed to save project";
         return;

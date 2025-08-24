@@ -75,7 +75,11 @@ Project Project::fromManifestJson(const QByteArray& json)
     p.buttons.clear();
     for (const auto& v : root.value("buttons").toArray())
     {
-        if (!v.isObject()) continue;
+        if (!v.isObject())
+        {
+            continue;
+        }
+
         auto      jb = v.toObject();
         ButtonDef b;
         b.id   = jb.value("id").toString();
@@ -89,7 +93,11 @@ Project Project::fromManifestJson(const QByteArray& json)
     p.leds.clear();
     for (const auto& v : root.value("leds").toArray())
     {
-        if (!v.isObject()) continue;
+        if (!v.isObject())
+        {
+            continue;
+        }
+
         auto   jl = v.toObject();
         LedDef l;
         l.id       = jl.value("id").toString();

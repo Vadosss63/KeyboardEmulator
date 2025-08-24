@@ -81,7 +81,7 @@ inline quint32 getU32(QIODevice& d)
 }
 }
 
-bool save(const QString& filePath, const Project& prj, bool withThumbnail)
+bool save(const QString& filePath, const Project& prj)
 {
     // Подготовка payload'ов
     QByteArray mani = prj.manifestJson.isEmpty() ? prj.toManifestJson() : prj.manifestJson;
@@ -92,17 +92,11 @@ bool save(const QString& filePath, const Project& prj, bool withThumbnail)
         pb.open(QIODevice::WriteOnly);
         if (!prj.background.isNull())
         {
-            if (!prj.background.save(&pb, "PNG")) return false;
+            if (!prj.background.save(&pb, "PNG"))
+            {
+                return false;
+            }
         }
-    }
-
-    QByteArray thumbJpg;
-    if (withThumbnail && !prj.background.isNull())
-    {
-        QImage  t = prj.background.scaledToWidth(480, Qt::SmoothTransformation);
-        QBuffer tb(&thumbJpg);
-        tb.open(QIODevice::WriteOnly);
-        t.save(&tb, "JPG", 80);
     }
 
     struct Payload
@@ -117,10 +111,6 @@ bool save(const QString& filePath, const Project& prj, bool withThumbnail)
     if (!bgPng.isEmpty())
     {
         payloads.push_back({FCC('B', 'K', 'P', 'N'), {}, bgPng});
-    }
-    if (!thumbJpg.isEmpty())
-    {
-        payloads.push_back({FCC('T', 'H', 'M', 'B'), {}, thumbJpg});
     }
 
     // Атомарная запись

@@ -10,6 +10,11 @@ ResizableRectItem::ResizableRectItem(qreal x, qreal y, qreal w, qreal h, QGraphi
     : QObject(), QGraphicsRectItem(x, y, w, h, parent)
 {
     initHandles();
+    infoItem = new QGraphicsTextItem(this);
+    infoItem->setPlainText("Info:");
+    infoItem->setDefaultTextColor(Qt::red);
+    infoItem->setFont(QFont("Arial", 14));
+    infoItem->setVisible(false);
 }
 
 void ResizableRectItem::setResizable(bool on)
@@ -29,6 +34,8 @@ void ResizableRectItem::setResizable(bool on)
     {
         h->setVisible(on);
     }
+
+    infoItem->setVisible(on);
     updateHandles();
 }
 
@@ -135,4 +142,7 @@ void ResizableRectItem::updateHandles()
         QSignalBlocker blocker(m_handles[i]);
         m_handles[i]->setPos(newHandlerPos);
     }
+
+    const QPointF infoPos = r.topRight() + QPointF{10, 10};
+    infoItem->setPos(infoPos);
 }
