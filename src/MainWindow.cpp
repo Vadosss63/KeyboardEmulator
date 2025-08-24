@@ -31,6 +31,7 @@ MainWindow::MainWindow(QWidget* parent)
     connect(scene, &CustomScene::diodeAdded, this, &MainWindow::addDiodeItem);
     connect(scene, &CustomScene::buttonAdded, this, &MainWindow::addButtonItem);
     connect(this, &MainWindow::workModeChanged, this, &MainWindow::handleNewWorkMode);
+    connect(this, &MainWindow::modifyModStatusChanged, scene, &CustomScene::setModifiable);
 }
 
 void MainWindow::setupScene()
@@ -290,7 +291,6 @@ void MainWindow::loadProject()
     auto* pix       = new QGraphicsPixmapItem(backgroundImage);
     pix->setZValue(-1);
     scene->addItem(pix);
-    scene->addStatusItem();
 
     // Restore LEDs
     for (const auto& ledDef : project.leds)

@@ -6,8 +6,19 @@
 
 CustomScene::CustomScene(QObject* parent) : QGraphicsScene(parent)
 {
+    setupItems();
+}
+
+void CustomScene::clear()
+{
+    QGraphicsScene::clear();
+    setupItems();
+}
+
+void CustomScene::setupItems()
+{
     setupAppVersionItem();
-    addStatusItem();
+    setupStatusItem();
 }
 
 void CustomScene::setupAppVersionItem()
@@ -58,15 +69,25 @@ void CustomScene::showStatus(bool on)
     statusItem->setVisible(on);
 }
 
-void CustomScene::addStatusItem()
+void CustomScene::setupStatusItem()
 {
     statusItem = addText("Status: Ready");
     statusItem->setDefaultTextColor(Qt::red);
     statusItem->setFont(getDefaultFont());
 }
 
+void CustomScene::setModifiable(bool isMod)
+{
+    isModifiable = isMod;
+}
+
 void CustomScene::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
 {
+    if (!isModifiable)
+    {
+        return;
+    }
+
     QGraphicsScene::contextMenuEvent(event);
     if (event->isAccepted())
     {
