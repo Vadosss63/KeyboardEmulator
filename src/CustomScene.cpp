@@ -2,9 +2,40 @@
 
 #include <QMenu>
 
+#include "TextDefinitions.h"
+
 CustomScene::CustomScene(QObject* parent) : QGraphicsScene(parent)
 {
+    setupAppVersionItem();
     addStatusItem();
+}
+
+void CustomScene::setupAppVersionItem()
+{
+    appVersionItem = addText(QStringLiteral(APP_VERSION));
+    appVersionItem->setDefaultTextColor(Qt::red);
+    appVersionItem->setFont(getDefaultFont());
+    appVersionItem->setVisible(true);
+
+    connect(this, &QGraphicsScene::sceneRectChanged, this, [this](const QRectF&) { updateAppVersionPos(); });
+
+    updateAppVersionPos();
+}
+
+void CustomScene::updateAppVersionPos()
+{
+    if (!appVersionItem)
+    {
+        return;
+    }
+
+    const QRectF scRect   = sceneRect();
+    const QRectF textRect = appVersionItem->boundingRect();
+
+    const qreal x = std::max((scRect.right() - textRect.width()), scRect.left());
+    const qreal y = scRect.top();
+
+    appVersionItem->setPos(x, y);
 }
 
 void CustomScene::updateStatus(uint8_t pin1, uint8_t pin2, const QVector<uint8_t>& leds)
@@ -31,7 +62,7 @@ void CustomScene::addStatusItem()
 {
     statusItem = addText("Status: Ready");
     statusItem->setDefaultTextColor(Qt::red);
-    statusItem->setFont(QFont("Arial", 14));
+    statusItem->setFont(getDefaultFont());
 }
 
 void CustomScene::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)

@@ -25,5 +25,9 @@ protected:
     void contextMenuEvent(QGraphicsSceneContextMenuEvent* event) override;
 
 private:
-    QGraphicsTextItem* statusItem = nullptr;
+    void setupAppVersionItem();
+    void updateAppVersionPos();
+
+    QGraphicsTextItem* statusItem{};
+    QGraphicsTextItem* appVersionItem{};
 };

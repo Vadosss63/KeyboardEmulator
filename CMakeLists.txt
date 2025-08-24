@@ -34,6 +34,10 @@ add_executable(${PROJECT_NAME} WIN32
     src/main.cpp
 )
 
+target_compile_definitions(${PROJECT_NAME}
+    PRIVATE APP_VERSION=\"${PROJECT_VERSION}\"
+)
+
 target_link_libraries(${PROJECT_NAME}
     PRIVATE Qt6::Core Qt6::Widgets Qt6::Gui Qt6::SerialPort
 )
