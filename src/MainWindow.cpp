@@ -32,6 +32,8 @@ MainWindow::MainWindow(QWidget* parent)
     connect(scene, &CustomScene::buttonAdded, this, &MainWindow::addButtonItem);
     connect(this, &MainWindow::workModeChanged, this, &MainWindow::handleNewWorkMode);
     connect(this, &MainWindow::modifyModStatusChanged, scene, &CustomScene::setModifiable);
+
+    emit workModeChanged(WorkMode::Modify);
 }
 
 void MainWindow::setupScene()
@@ -44,6 +46,7 @@ void MainWindow::handleNewWorkMode(WorkMode mode)
 {
     currentWorkMode = mode;
     emit modifyModStatusChanged(currentWorkMode == WorkMode::Modify);
+    emit workingModStatusChanged(currentWorkMode == WorkMode::Work);
 }
 
 void MainWindow::setupToolbar()
@@ -225,6 +228,7 @@ void MainWindow::addButtonItem(ButtonItem* button)
     connect(button, &ButtonItem::buttonPressed, this, &MainWindow::appButtonPressed);
     connect(button, &ButtonItem::buttonReleased, this, &MainWindow::appButtonReleased);
     connect(this, &MainWindow::updateButtonStatus, button, &ButtonItem::onStatusUpdate);
+    connect(this, &MainWindow::workingModStatusChanged, button, &ButtonItem::setClickable);
     addResizableItem(button);
     buttonItems.append(button);
 }

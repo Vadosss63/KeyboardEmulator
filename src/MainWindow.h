@@ -10,7 +10,7 @@
 
 enum class WorkMode
 {
-    Work,
+    Work = 0,
     Check,
     Modify,
 };
@@ -37,6 +37,7 @@ signals:
     void workModeChanged(WorkMode mode);
 
     void modifyModStatusChanged(bool isModifiable);
+    void workingModStatusChanged(bool isActive);
 
 public slots:
     void enterCheckMode();

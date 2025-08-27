@@ -4,6 +4,31 @@
 #include <QDebug>
 #include <QGraphicsSceneContextMenuEvent>
 
+namespace
+{
+
+bool isLeftButtonPressed(QGraphicsSceneMouseEvent* event)
+{
+    if (!event)
+    {
+        return false;
+    }
+
+    return event->button() == Qt::LeftButton;
+}
+
+bool isCtrlButtonPressed(QGraphicsSceneMouseEvent* event)
+{
+    if (!event)
+    {
+        return false;
+    }
+
+    return event->modifiers() & Qt::ControlModifier;
+}
+
+}
+
 ButtonItem::ButtonItem(qreal x, qreal y, qreal w, qreal h, QGraphicsItem* parent)
     : ResizableRectItem(x, y, w, h, parent), m_normalBrush(Qt::transparent), m_activeBrush(QColor(0, 0, 0, 80))
 {
@@ -35,49 +60,38 @@ ButtonDef ButtonItem::getDefinition() const
 
 void ButtonItem::mousePressEvent(QGraphicsSceneMouseEvent* event)
 {
-    if (m_active)
-    {
-        event->accept();
-        return;
-    }
-
-    if (event->button() != Qt::LeftButton)
+    if (!m_clickable || !isLeftButtonPressed(event) || isCtrlButtonPressed(event))
     {
         ResizableRectItem::mousePressEvent(event);
         return;
     }
 
-    m_active = true;
-
-    updateAppearance();
-
-    emit buttonPressed(m_pin1, m_pin2);
-
-    bool ctrlPressed = event->modifiers() & Qt::ControlModifier;
-
-    if (ctrlPressed)
+    if (!m_active)
     {
-        ResizableRectItem::mousePressEvent(event);
-        return;
+        m_active = true;
+        updateAppearance();
+        emit buttonPressed(m_pin1, m_pin2);
     }
 
+    ResizableRectItem::mousePressEvent(event);
     event->accept();
 }
 
 void ButtonItem::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
 {
-    if (event->button() != Qt::LeftButton)
+    ResizableRectItem::mouseReleaseEvent(event);
+
+    if (!m_clickable || !isLeftButtonPressed(event))
     {
-        ResizableRectItem::mousePressEvent(event);
         return;
     }
 
-    m_active = false;
-    updateAppearance();
-
-    emit buttonReleased(m_pin1, m_pin2);
-
-    ResizableRectItem::mouseReleaseEvent(event);
+    if (m_active)
+    {
+        m_active = false;
+        updateAppearance();
+        emit buttonReleased(m_pin1, m_pin2);
+    }
 
     event->accept();
 }
@@ -146,4 +160,9 @@ void ButtonItem::updateAppearance()
 {
     setBrush(m_active ? m_activeBrush : m_normalBrush);
     update();
+}
+
+void ButtonItem::setClickable(bool isClickable)
+{
+    m_clickable = isClickable;
 }

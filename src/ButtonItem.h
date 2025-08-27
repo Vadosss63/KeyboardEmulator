@@ -25,6 +25,7 @@ signals:
 
 public slots:
     void onStatusUpdate(uint8_t pin1, uint8_t pin2, bool isPressed);
+    void setClickable(bool isClickable);
 
 protected:
     void mousePressEvent(QGraphicsSceneMouseEvent* event) override;
@@ -36,9 +37,10 @@ private:
     void updateAppearance();
     void addPinConfigMenu(QMenu& menu);
 
-    bool    m_active = false;
+    bool    m_active{};
+    bool    m_clickable{};
     QBrush  m_normalBrush;
     QBrush  m_activeBrush;
-    uint8_t m_pin1 = 0;
-    uint8_t m_pin2 = 0;
+    uint8_t m_pin1{};
+    uint8_t m_pin2{};
 };
