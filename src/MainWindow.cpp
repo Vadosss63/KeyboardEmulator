@@ -42,11 +42,21 @@ void MainWindow::setupScene()
     view->setRenderHint(QPainter::Antialiasing);
 }
 
+bool MainWindow::isWorkingMode() const
+{
+    return currentWorkMode == WorkMode::Work;
+}
+
+bool MainWindow::isModifyMode() const
+{
+    return currentWorkMode == WorkMode::Modify;
+}
+
 void MainWindow::handleNewWorkMode(WorkMode mode)
 {
     currentWorkMode = mode;
-    emit modifyModStatusChanged(currentWorkMode == WorkMode::Modify);
-    emit workingModStatusChanged(currentWorkMode == WorkMode::Work);
+    emit modifyModStatusChanged(isModifyMode());
+    emit workingModStatusChanged(isWorkingMode());
 }
 
 void MainWindow::setupToolbar()
@@ -221,6 +231,7 @@ void MainWindow::addDiodeItem(DiodeItem* diode)
 void MainWindow::addResizableItem(ResizableRectItem* item)
 {
     connect(this, &MainWindow::modifyModStatusChanged, item, &ResizableRectItem::setResizable);
+    item->setResizable(isModifyMode());
 }
 
 void MainWindow::addButtonItem(ButtonItem* button)

@@ -46,7 +46,7 @@ private:
 
     void updateHandles();
 
-    bool m_resizable = false;
+    bool m_resizable{};
 
     QGraphicsTextItem* infoItem{};
 

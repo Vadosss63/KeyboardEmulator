@@ -61,6 +61,9 @@ private:
     void setupMenus();
     void refreshComPorts();
 
+    bool isWorkingMode() const;
+    bool isModifyMode() const;
+
     QPixmap backgroundImage;
 
     CustomScene*   scene;
