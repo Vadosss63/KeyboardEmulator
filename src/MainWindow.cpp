@@ -52,11 +52,17 @@ bool MainWindow::isModifyMode() const
     return currentWorkMode == WorkMode::Modify;
 }
 
+bool MainWindow::isCheckMode() const
+{
+    return currentWorkMode == WorkMode::Check;
+}
+
 void MainWindow::handleNewWorkMode(WorkMode mode)
 {
     currentWorkMode = mode;
     emit modifyModStatusChanged(isModifyMode());
     emit workingModStatusChanged(isWorkingMode());
+    scene->showStatus(isCheckMode());
 }
 
 void MainWindow::setupToolbar()
@@ -87,8 +93,8 @@ void MainWindow::setupToolbar()
     modeBtn->setMenu(modeMenu);
     modeBtn->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
 
-    modeBtn->setDefaultAction(actRun);
-    actRun->setChecked(true);
+    modeBtn->setDefaultAction(actModify);
+    actModify->setChecked(true);
 
     tb->addWidget(modeBtn);
 
@@ -99,18 +105,17 @@ void MainWindow::setupToolbar()
             {
                 modeBtn->setDefaultAction(act);
                 const auto mode = static_cast<WorkMode>(act->data().toInt());
+                /// TODO: Should be reworked
                 switch (mode)
                 {
                     case WorkMode::Check:
                     {
-                        appEnterModeCheck();
-                        enterCheckMode();
+                        emit appEnterModeCheck();
                         break;
                     }
                     case WorkMode::Work:
                     {
-                        appEnterModeRun();
-                        enterRunMode();
+                        emit appEnterModeRun();
                         break;
                     }
                     case WorkMode::Modify:
@@ -199,16 +204,6 @@ void MainWindow::refreshComPorts()
     {
         comMenu->addAction(tr("No ports found"))->setEnabled(false);
     }
-}
-
-void MainWindow::enterCheckMode()
-{
-    scene->showStatus(true);
-}
-
-void MainWindow::enterRunMode()
-{
-    scene->showStatus(false);
 }
 
 void MainWindow::updateStatus(uint8_t pin1, uint8_t pin2, const QVector<uint8_t>& leds)

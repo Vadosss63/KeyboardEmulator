@@ -40,8 +40,6 @@ signals:
     void workingModStatusChanged(bool isActive);
 
 public slots:
-    void enterCheckMode();
-    void enterRunMode();
     // Controller → View
     void updateStatus(uint8_t pin1, uint8_t pin2, const QVector<uint8_t>& leds);
 
@@ -63,6 +61,7 @@ private:
 
     bool isWorkingMode() const;
     bool isModifyMode() const;
+    bool isCheckMode() const;
 
     QPixmap backgroundImage;
 
