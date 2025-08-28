@@ -22,6 +22,7 @@ signals:
     void pinsAssigned(uint8_t pin1, uint8_t pin2);
     void buttonPressed(uint8_t pin1, uint8_t pin2);
     void buttonReleased(uint8_t pin1, uint8_t pin2);
+    void removeButton(ButtonItem* item);
 
 public slots:
     void onStatusUpdate(uint8_t pin1, uint8_t pin2, bool isPressed);
@@ -31,7 +32,8 @@ protected:
     void mousePressEvent(QGraphicsSceneMouseEvent* event) override;
     void mouseReleaseEvent(QGraphicsSceneMouseEvent* event) override;
 
-    void handleDerivedContextMenuEvent(QGraphicsSceneContextMenuEvent* event) override;
+    void setupDeleteItemAction(QAction* deleteAction) override;
+    void extendDerivedContextMenu(QMenu& menu) override;
 
 private:
     void updateAppearance();

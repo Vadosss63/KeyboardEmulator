@@ -26,13 +26,15 @@ public slots:
 signals:
     void pinAssigned(uint8_t pin);
     void inversionChanged(bool inverted);
+    void removeDiode(DiodeItem* item);
 
 protected:
     void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget) override;
 
     QPainterPath shape() const override;
 
-    void handleDerivedContextMenuEvent(QGraphicsSceneContextMenuEvent* event) override;
+    void extendDerivedContextMenu(QMenu& menu) override;
+    void setupDeleteItemAction(QAction* deleteAction) override;
 
 private:
     void updateAppearance();

@@ -221,6 +221,7 @@ void MainWindow::addDiodeItem(DiodeItem* diode)
     connect(this, &MainWindow::updateDiodeStatus, diode, &DiodeItem::onStatusUpdate);
     diodeItems.append(diode);
     addResizableItem(diode);
+    connect(diode, &DiodeItem::removeDiode, this, &MainWindow::deleteDiode);
 }
 
 void MainWindow::addResizableItem(ResizableRectItem* item)
@@ -237,6 +238,31 @@ void MainWindow::addButtonItem(ButtonItem* button)
     connect(this, &MainWindow::workingModStatusChanged, button, &ButtonItem::setClickable);
     addResizableItem(button);
     buttonItems.append(button);
+    connect(button, &ButtonItem::removeButton, this, &MainWindow::deleteButton);
+}
+
+void MainWindow::deleteButton(ButtonItem* button)
+{
+    if (!button)
+    {
+        return;
+    }
+
+    scene->removeItem(button);
+    buttonItems.removeOne(button);
+    delete button;
+}
+
+void MainWindow::deleteDiode(DiodeItem* diode)
+{
+    if (!diode)
+    {
+        return;
+    }
+
+    scene->removeItem(diode);
+    diodeItems.removeOne(diode);
+    delete diode;
 }
 
 void MainWindow::saveProject()

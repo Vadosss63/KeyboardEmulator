@@ -79,10 +79,8 @@ QPainterPath DiodeItem::shape() const
     return path;
 }
 
-void DiodeItem::handleDerivedContextMenuEvent(QGraphicsSceneContextMenuEvent* event)
+void DiodeItem::extendDerivedContextMenu(QMenu& menu)
 {
-    QMenu menu;
-
     if (isModifyMod())
     {
         addConfigMenu(menu);
@@ -92,8 +90,11 @@ void DiodeItem::handleDerivedContextMenuEvent(QGraphicsSceneContextMenuEvent* ev
     pinAct->setEnabled(false);
     QAction* invAct = menu.addAction(tr("Inverted: %1").arg(m_inverted));
     invAct->setEnabled(false);
+}
 
-    menu.exec(event->screenPos());
+void DiodeItem::setupDeleteItemAction(QAction* deleteAction)
+{
+    connect(deleteAction, &QAction::triggered, this, [this] { emit removeDiode(this); });
 }
 
 void DiodeItem::addConfigMenu(QMenu& menu)

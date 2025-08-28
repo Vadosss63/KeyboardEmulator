@@ -83,12 +83,13 @@ void CustomScene::setModifiable(bool isMod)
 
 void CustomScene::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
 {
+    QGraphicsScene::contextMenuEvent(event);
+
     if (!isModifiable)
     {
         return;
     }
 
-    QGraphicsScene::contextMenuEvent(event);
     if (event->isAccepted())
     {
         return;

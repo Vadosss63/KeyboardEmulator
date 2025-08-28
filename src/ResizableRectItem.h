@@ -32,7 +32,8 @@ protected:
 
     void contextMenuEvent(QGraphicsSceneContextMenuEvent* event) override;
 
-    virtual void handleDerivedContextMenuEvent(QGraphicsSceneContextMenuEvent* event);
+    virtual void extendDerivedContextMenu(QMenu& menu);
+    virtual void setupDeleteItemAction(QAction* deleteAction);
 
     bool isModifyMod() const;
 
@@ -42,8 +43,8 @@ private slots:
     void handleMoved(int handleIndex, const QPointF& scenePos);
 
 private:
+    void addDeleteItemAction(QMenu& menu);
     void initHandles();
-
     void updateHandles();
 
     bool m_resizable{};

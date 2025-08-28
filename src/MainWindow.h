@@ -53,6 +53,10 @@ private slots:
     void saveProject();
     void loadProject();
 
+private slots:
+    void deleteButton(ButtonItem* button);
+    void deleteDiode(DiodeItem* diode);
+
 private:
     void setupScene();
     void setupToolbar();

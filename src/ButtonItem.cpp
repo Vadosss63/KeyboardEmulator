@@ -107,10 +107,8 @@ void ButtonItem::onStatusUpdate(uint8_t pin1, uint8_t pin2, bool isPressed)
     updateAppearance();
 }
 
-void ButtonItem::handleDerivedContextMenuEvent(QGraphicsSceneContextMenuEvent* event)
+void ButtonItem::extendDerivedContextMenu(QMenu& menu)
 {
-    QMenu menu;
-
     if (isModifyMod())
     {
         addPinConfigMenu(menu);
@@ -120,8 +118,11 @@ void ButtonItem::handleDerivedContextMenuEvent(QGraphicsSceneContextMenuEvent* e
     pin1Act->setEnabled(false);
     QAction* pin2Act = menu.addAction(tr("Pin2: %1").arg(m_pin2));
     pin2Act->setEnabled(false);
+}
 
-    menu.exec(event->screenPos());
+void ButtonItem::setupDeleteItemAction(QAction* deleteAction)
+{
+    connect(deleteAction, &QAction::triggered, this, [this] { emit removeButton(this); });
 }
 
 void ButtonItem::addPinConfigMenu(QMenu& menu)

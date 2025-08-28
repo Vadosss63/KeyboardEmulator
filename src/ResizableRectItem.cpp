@@ -68,11 +68,28 @@ QVariant ResizableRectItem::itemChange(GraphicsItemChange change, const QVariant
 
 void ResizableRectItem::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
 {
-    handleDerivedContextMenuEvent(event);
+    QMenu menu;
+
+    if (isModifyMod())
+    {
+        addDeleteItemAction(menu);
+    }
+
+    extendDerivedContextMenu(menu);
     event->accept();
+
+    menu.exec(event->screenPos());
 }
 
-void ResizableRectItem::handleDerivedContextMenuEvent(QGraphicsSceneContextMenuEvent* /*event*/) {}
+void ResizableRectItem::addDeleteItemAction(QMenu& menu)
+{
+    QAction* deleteAction = menu.addAction("Удалить");
+    setupDeleteItemAction(deleteAction);
+}
+
+void ResizableRectItem::setupDeleteItemAction(QAction* /*deleteAction*/) {}
+
+void ResizableRectItem::extendDerivedContextMenu(QMenu& /*menu*/) {}
 
 void ResizableRectItem::handleMoved(int handleIndex, const QPointF& scenePos)
 {
