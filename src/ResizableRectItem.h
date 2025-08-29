@@ -39,6 +39,8 @@ protected:
 
     QRectF rectItem() const;
 
+    void setInfoText(const QString& text);
+
 private slots:
     void handleMoved(int handleIndex, const QPointF& scenePos);
 

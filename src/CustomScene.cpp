@@ -51,8 +51,7 @@ void CustomScene::updateAppVersionPos()
 
 void CustomScene::updateStatus(uint8_t pin1, uint8_t pin2, const QVector<uint8_t>& leds)
 {
-    // Update the status text item with the current pin and LED information
-    QString statusText = QString("Status: Pins (%1, %2) LEDs: ").arg(pin1).arg(pin2);
+    QString statusText = QString("Pins (%1, %2), LEDs: ").arg(pin1).arg(pin2);
     for (int i = 0; i < leds.size(); ++i)
     {
         statusText.append(QString::number(leds[i]));
@@ -67,13 +66,18 @@ void CustomScene::updateStatus(uint8_t pin1, uint8_t pin2, const QVector<uint8_t
 void CustomScene::showStatus(bool on)
 {
     statusItem->setVisible(on);
+    if (on)
+    {
+        updateStatus(0, 0, {0, 0});
+    }
 }
 
 void CustomScene::setupStatusItem()
 {
-    statusItem = addText("Status: Ready");
+    statusItem = addText("");
     statusItem->setDefaultTextColor(Qt::red);
     statusItem->setFont(getDefaultFont());
+    statusItem->setVisible(false);
 }
 
 void CustomScene::setModifiable(bool isMod)

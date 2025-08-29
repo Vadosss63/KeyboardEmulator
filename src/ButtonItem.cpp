@@ -29,24 +29,20 @@ bool isCtrlButtonPressed(QGraphicsSceneMouseEvent* event)
 
 }
 
-ButtonItem::ButtonItem(qreal x, qreal y, qreal w, qreal h, QGraphicsItem* parent)
+ButtonItem::ButtonItem(qreal x, qreal y, qreal w, qreal h, QGraphicsItem* parent, uint8_t pin1, uint8_t pin2)
     : ResizableRectItem(x, y, w, h, parent), m_normalBrush(Qt::transparent), m_activeBrush(QColor(0, 0, 0, 80))
 {
     QPen pen(Qt::blue, 2);
     pen.setStyle(Qt::DashLine);
     setPen(pen);
     setBrush(m_normalBrush);
+    setPin1(pin1);
+    setPin2(pin2);
 }
 
 ButtonItem::ButtonItem(const ButtonDef& def, QGraphicsItem* parent)
-    : ResizableRectItem(def.rect.x(), def.rect.y(), def.rect.width(), def.rect.height(), parent)
-    , m_pin1(def.p1)
-    , m_pin2(def.p2)
+    : ButtonItem(def.rect.x(), def.rect.y(), def.rect.width(), def.rect.height(), parent, def.p1, def.p2)
 {
-    QPen pen(Qt::blue, 2);
-    pen.setStyle(Qt::DashLine);
-    setPen(pen);
-    setBrush(m_normalBrush);
 }
 
 ButtonDef ButtonItem::getDefinition() const
@@ -56,6 +52,18 @@ ButtonDef ButtonItem::getDefinition() const
     def.p1   = m_pin1;
     def.p2   = m_pin2;
     return def;
+}
+
+void ButtonItem::setPin1(uint8_t pin)
+{
+    m_pin1 = pin;
+    updateTextInfo();
+}
+
+void ButtonItem::setPin2(uint8_t pin)
+{
+    m_pin2 = pin;
+    updateTextInfo();
 }
 
 void ButtonItem::mousePressEvent(QGraphicsSceneMouseEvent* event)
@@ -133,28 +141,18 @@ void ButtonItem::addPinConfigMenu(QMenu& menu)
     for (uint8_t i = 1; i <= 15; ++i)
     {
         QAction* act1 = pin1Menu->addAction(QString::number(i));
-        connect(act1,
-                &QAction::triggered,
-                this,
-                [this, i]()
-                {
-                    m_pin1 = i;
-                    qDebug() << "ButtonItem: Pin1 set to" << i;
-                    emit pinsAssigned(m_pin1, m_pin2);
-                });
+        connect(act1, &QAction::triggered, this, [this, i]() { setPin1(i); });
         QAction* act2 = pin2Menu->addAction(QString::number(i));
-        connect(act2,
-                &QAction::triggered,
-                this,
-                [this, i]()
-                {
-                    m_pin2 = i;
-                    qDebug() << "ButtonItem: Pin2 set to" << i;
-                    emit pinsAssigned(m_pin1, m_pin2);
-                });
+        connect(act2, &QAction::triggered, this, [this, i]() { setPin2(i); });
     }
 
     menu.addSeparator();
+}
+
+void ButtonItem::updateTextInfo()
+{
+    const QString info = QString("P1:%1\nP2:%2").arg(m_pin1).arg(m_pin2);
+    setInfoText(info);
 }
 
 void ButtonItem::updateAppearance()

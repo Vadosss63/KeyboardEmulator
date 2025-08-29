@@ -11,7 +11,7 @@ ResizableRectItem::ResizableRectItem(qreal x, qreal y, qreal w, qreal h, QGraphi
 {
     initHandles();
     infoItem = new QGraphicsTextItem(this);
-    infoItem->setPlainText("Info:");
+    infoItem->setPlainText("");
     infoItem->setDefaultTextColor(Qt::red);
     infoItem->setFont(QFont("Arial", 14));
     infoItem->setVisible(false);
@@ -48,6 +48,11 @@ QRectF ResizableRectItem::rectItem() const
 {
     QRectF rScene = mapRectToScene(rect());
     return rScene;
+}
+
+void ResizableRectItem::setInfoText(const QString& text)
+{
+    infoItem->setPlainText(text);
 }
 
 QVariant ResizableRectItem::itemChange(GraphicsItemChange change, const QVariant& value)

@@ -5,7 +5,8 @@
 #include <QDebug>
 #include <QGraphicsSceneMouseEvent>
 
-DiodeItem::DiodeItem(qreal x, qreal y, qreal w, qreal h, QGraphicsItem* parent) : ResizableRectItem(x, y, w, h, parent)
+DiodeItem::DiodeItem(qreal x, qreal y, qreal w, qreal h, QGraphicsItem* parent, uint8_t pin, bool inverted)
+    : ResizableRectItem(x, y, w, h, parent), m_pin(pin), m_inverted(inverted)
 {
     QColor offColor = m_offColor;
     offColor.setAlphaF(0.3);
@@ -17,23 +18,14 @@ DiodeItem::DiodeItem(qreal x, qreal y, qreal w, qreal h, QGraphicsItem* parent) 
 
     setPen(QPen(m_offColor, 2));
     setBrush(m_offBrush);
+
+    setPin(pin);
+    setInverted(inverted);
 }
 
 DiodeItem::DiodeItem(const LedDef& def, QGraphicsItem* parent)
-    : ResizableRectItem(def.rect.x(), def.rect.y(), def.rect.width(), def.rect.height(), parent)
-    , m_pin(def.pin)
-    , m_inverted(def.inverted)
+    : DiodeItem(def.rect.x(), def.rect.y(), def.rect.width(), def.rect.height(), parent, def.pin, def.inverted)
 {
-    QColor offColor = m_offColor;
-    offColor.setAlphaF(0.3);
-    m_offBrush = QBrush(offColor);
-
-    QColor onColor = m_onColor;
-    onColor.setAlphaF(0.3);
-    m_onBrush = QBrush(onColor);
-
-    setPen(QPen(m_offColor, 2));
-    setBrush(m_offBrush);
 }
 
 LedDef DiodeItem::getDefinition() const
@@ -43,6 +35,19 @@ LedDef DiodeItem::getDefinition() const
     def.pin      = m_pin;
     def.inverted = m_inverted;
     return def;
+}
+
+void DiodeItem::setPin(uint8_t pin)
+{
+    m_pin = pin;
+    updateTextInfo();
+}
+
+void DiodeItem::setInverted(bool inverted)
+{
+    m_inverted = inverted;
+    updateTextInfo();
+    onStatusUpdate(m_pin, false);
 }
 
 void DiodeItem::onStatusUpdate(uint8_t pin, bool isOn)
@@ -106,41 +111,23 @@ void DiodeItem::addConfigMenu(QMenu& menu)
     for (uint8_t i = 1; i <= 15; ++i)
     {
         QAction* act = pinMenu->addAction(QString::number(i));
-        connect(act,
-                &QAction::triggered,
-                this,
-                [this, i]()
-                {
-                    m_pin = i;
-                    qDebug() << "DiodeItem: Pin set to" << i;
-                    emit pinAssigned(m_pin);
-                });
+        connect(act, &QAction::triggered, this, [this, i]() { setPin(i); });
     }
 
     QAction* invOn  = invMenu->addAction(tr("Non-inverted"));
     QAction* invOff = invMenu->addAction(tr("Inverted"));
     invOn->setData(QVariant(false));
     invOff->setData(QVariant(true));
-    connect(invOn,
-            &QAction::triggered,
-            this,
-            [this]()
-            {
-                m_inverted = false;
-                qDebug() << "DiodeItem: Non-inverted";
-                emit inversionChanged(m_inverted);
-            });
-    connect(invOff,
-            &QAction::triggered,
-            this,
-            [this]()
-            {
-                m_inverted = true;
-                qDebug() << "DiodeItem: Inverted";
-                emit inversionChanged(m_inverted);
-            });
+    connect(invOn, &QAction::triggered, this, [this]() { setInverted(false); });
+    connect(invOff, &QAction::triggered, this, [this]() { setInverted(true); });
 
     menu.addSeparator();
+}
+
+void DiodeItem::updateTextInfo()
+{
+    const QString info = QString("P:%1\nI:%2").arg(m_pin).arg(m_inverted);
+    setInfoText(info);
 }
 
 void DiodeItem::updateAppearance()

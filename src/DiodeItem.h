@@ -15,17 +15,24 @@ class DiodeItem : public ResizableRectItem
 {
     Q_OBJECT
 public:
-    DiodeItem(qreal x, qreal y, qreal w = 80, qreal h = 80, QGraphicsItem* parent = nullptr);
+    DiodeItem(qreal          x,
+              qreal          y,
+              qreal          w        = 80,
+              qreal          h        = 80,
+              QGraphicsItem* parent   = nullptr,
+              uint8_t        pin      = 0,
+              bool           inverted = false);
     DiodeItem(const LedDef& def, QGraphicsItem* parent = nullptr);
 
     LedDef getDefinition() const;
+
+    void setPin(uint8_t pin);
+    void setInverted(bool inverted);
 
 public slots:
     void onStatusUpdate(uint8_t pin, bool isOn);
 
 signals:
-    void pinAssigned(uint8_t pin);
-    void inversionChanged(bool inverted);
     void removeDiode(DiodeItem* item);
 
 protected:
@@ -39,6 +46,8 @@ protected:
 private:
     void updateAppearance();
     void addConfigMenu(QMenu& menu);
+
+    void updateTextInfo();
 
     bool m_active = false;
 
