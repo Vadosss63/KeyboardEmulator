@@ -68,20 +68,28 @@ void ButtonItem::setPin2(uint8_t pin)
 
 void ButtonItem::mousePressEvent(QGraphicsSceneMouseEvent* event)
 {
-    if (!m_clickable || !isLeftButtonPressed(event) || isCtrlButtonPressed(event))
+    if (!m_clickable || m_active)
+    {
+        event->accept();
+        return;
+    }
+
+    if (!isLeftButtonPressed(event))
     {
         ResizableRectItem::mousePressEvent(event);
         return;
     }
 
-    if (!m_active)
+    m_active = true;
+    updateAppearance();
+    emit buttonPressed(m_pin1, m_pin2);
+
+    if (isCtrlButtonPressed(event))
     {
-        m_active = true;
-        updateAppearance();
-        emit buttonPressed(m_pin1, m_pin2);
+        ResizableRectItem::mousePressEvent(event);
+        return;
     }
 
-    ResizableRectItem::mousePressEvent(event);
     event->accept();
 }
 
