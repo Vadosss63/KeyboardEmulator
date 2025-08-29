@@ -120,6 +120,7 @@ void MainWindow::setupToolbar()
                     }
                     case WorkMode::Modify:
                     {
+                        emit appEnterModeConfigure();
                         break;
                     }
                     default:
@@ -209,6 +210,10 @@ void MainWindow::refreshComPorts()
 void MainWindow::updateStatus(uint8_t pin1, uint8_t pin2, const QVector<uint8_t>& leds)
 {
     scene->updateStatus(pin1, pin2, leds);
+
+    emit updateButtonStatus(0, 0, false);
+
+    emit updateButtonStatus(pin1, pin2, true);
 
     for (int i = 0; i < leds.size(); ++i)
     {

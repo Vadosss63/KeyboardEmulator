@@ -17,6 +17,7 @@ extern "C"
 #define CMD_BTN_RELEASED 0x02
 #define CMD_MODE_CHECK_KEYBOARD 0x03
 #define CMD_MODE_RUN 0x04
+#define CMD_MODE_CONFIGURE 0x05
 
 #pragma pack(push, 1)
 

@@ -106,6 +106,17 @@ void ButtonItem::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
 
 void ButtonItem::onStatusUpdate(uint8_t pin1, uint8_t pin2, bool isPressed)
 {
+    if (pin1 == 0 && pin2 == 0)
+    {
+        // Reset all buttons
+        if (m_active)
+        {
+            m_active = false;
+            updateAppearance();
+        }
+        return;
+    }
+
     if (m_pin1 != pin1 || m_pin2 != pin2)
     {
         return;

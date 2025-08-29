@@ -27,6 +27,7 @@ private slots:
     void handleAppButtonReleased(uint8_t pin1, uint8_t pin2);
     void handleAppEnterModeCheck();
     void handleAppEnterModeRun();
+    void handleAppEnterModeConfigure();
     void handleWorkModeChanged(WorkMode mode);
 
 private:

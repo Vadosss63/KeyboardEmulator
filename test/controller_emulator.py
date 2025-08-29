@@ -4,7 +4,7 @@ import sys
 import threading
 import time
 from dataclasses import dataclass, field
-from typing import List, Tuple, Optional, Dict
+from typing import List, Tuple, Optional
 
 try:
     import serial  # pyserial
@@ -20,12 +20,11 @@ CMD_BTN_PRESSED           = 0x01
 CMD_BTN_RELEASED          = 0x02
 CMD_MODE_CHECK_KEYBOARD   = 0x03
 CMD_MODE_RUN              = 0x04
+CMD_MODE_CONFIGURE        = 0x05   # новое
 
-# Длины «payload+checksum» (т.е. байты после поля Length и ВКЛЮЧАЯ checksum)
-# App->Ctrl: Command(1) + Pin1(1) + Pin2(1) + Checksum(1) = 4
-A2C_LENGTH = 4
-# Ctrl->App: Pin1(1) + Pin2(1) + LEDs(15) + Checksum(1) = 18
-C2A_LENGTH = 18
+# Длины «payload+checksum» (байты после поля Length и ВКЛЮЧАЯ checksum)
+A2C_LENGTH = 4                                  # Cmd(1)+P1(1)+P2(1)+Chk(1)
+C2A_LENGTH = 18                                 # P1(1)+P2(1)+LED+Chk(1)
 
 def calc_checksum(data: bytes) -> int:
     return sum(data) & 0xFF
@@ -40,40 +39,26 @@ class A2C_Packet:
 
 @dataclass
 class ControllerState:
-    mode_check: bool = False     # False = RUN, True = CHECK_KEYBOARD
-    # Множество «нажатых» пар (pin1,pin2). Храним нормализованно (меньший, больший), 1..15
+    # режимы
+    mode: int = CMD_MODE_RUN  # по умолчанию RUN
+    # «нажатые» пары для RUN (не шлём наружу, но держим состояние)
     pressed_pairs: set = field(default_factory=set)
-    # Последнее «интересное» событие для заполнения pin1/pin2 в CHECK-режиме
-    last_event_pins: Tuple[int, int] = (0, 0)
 
-    def set_mode_check(self, flag: bool):
-        self.mode_check = flag
-        if not flag:
-            self.last_event_pins = (0, 0)
+    # индекс перебора для CHECK
+    check_index: int = 1
 
+    def set_mode(self, mode: int):
+        self.mode = mode
+        # сбросить служебные состояния при смене режима
+        if mode == CMD_MODE_CHECK_KEYBOARD:
+            self.check_index = 1
+
+    # RUN: фиксация нажатий
     def press(self, p1: int, p2: int):
-        key = self._norm_pair(p1, p2)
-        self.pressed_pairs.add(key)
-        self.last_event_pins = (p1, p2)
+        self.pressed_pairs.add(self._norm_pair(p1, p2))
 
     def release(self, p1: int, p2: int):
-        key = self._norm_pair(p1, p2)
-        self.pressed_pairs.discard(key)
-        self.last_event_pins = (p1, p2)
-
-    def compute_leds(self) -> List[int]:
-        """
-        Простая эвристика: LED[i] = 1, если номер i участвует
-        хотя бы в одной нажатой паре; иначе 0.
-        """
-        active = set()
-        for a, b in self.pressed_pairs:
-            if 1 <= a <= 15: active.add(a)
-            if 1 <= b <= 15: active.add(b)
-        leds = [0]*15
-        for i in range(15):
-            leds[i] = 1 if (i+1) in active else 0
-        return leds
+        self.pressed_pairs.discard(self._norm_pair(p1, p2))
 
     @staticmethod
     def _norm_pair(a: int, b: int) -> Tuple[int, int]:
@@ -89,7 +74,6 @@ class Framer:
         self.on_packet = on_packet
         self.verbose = verbose
         self.buf = bytearray()
-        self.expected_total = None  # полная длина кадра, когда известно
 
     def feed(self, chunk: bytes):
         self.buf.extend(chunk)
@@ -97,7 +81,6 @@ class Framer:
 
     def _drain(self):
         while True:
-            # ищем SOF
             sof_index = self.buf.find(bytes([PROTOCOL_SOF]))
             if sof_index == -1:
                 self.buf.clear()
@@ -105,28 +88,24 @@ class Framer:
             if sof_index > 0:
                 del self.buf[:sof_index]
 
-            # нужно минимум 2 байта (SOF + Length), чтобы понять ожидаемую длину
             if len(self.buf) < 2:
                 return
 
-            # buf[0] == SOF
             length = self.buf[1]
             expected = 1 + 1 + length  # SOF + Length + (payload+checksum)
             if len(self.buf) < expected:
-                # ждём остальное
                 return
 
             frame = bytes(self.buf[:expected])
             del self.buf[:expected]
 
-            # Проверка длины для App->Ctrl
+            # Проверка длины
             if length != A2C_LENGTH:
                 if self.verbose:
                     print(f"[WARN] Bad A2C length={length}, expected {A2C_LENGTH}", file=sys.stderr)
                 continue
 
-            # валидация чексумы
-            # checksum считается по всем байтам ДО checksum'а (т.е. SOF..Pin2 включительно)
+            # Проверка checksum (по всем байтам до checksum)
             checksum_expected = frame[-1]
             checksum_calc = calc_checksum(frame[:-1])
             if checksum_expected != checksum_calc:
@@ -134,23 +113,19 @@ class Framer:
                     print(f"[WARN] Bad checksum: got=0x{checksum_expected:02X}, calc=0x{checksum_calc:02X}", file=sys.stderr)
                 continue
 
-            # распаковка
-            # frame: [0]=SOF, [1]=Length, [2]=Command, [3]=Pin1, [4]=Pin2, [5]=Checksum
-            cmd = frame[2]
+            cmd  = frame[2]
             pin1 = frame[3]
             pin2 = frame[4]
-            pkt = A2C_Packet(cmd, pin1, pin2)
-            self.on_packet(pkt)
+            self.on_packet(A2C_Packet(cmd, pin1, pin2))
 
 
 class ControllerEmulator:
-    def __init__(self, port: str, baud: int, period_s: float = 0.05, verbose: bool = False):
+    def __init__(self, port: str, baud: int, check_interval_s: float = 0.2, verbose: bool = False):
         if serial is None:
             raise RuntimeError("pyserial не установлен. Установите: pip install pyserial")
 
         self.port_name = port
         self.baud = baud
-        self.period_s = period_s
         self.verbose = verbose
 
         self.ser: Optional[serial.Serial] = None
@@ -159,9 +134,9 @@ class ControllerEmulator:
         self._stop = threading.Event()
         self._tx_lock = threading.Lock()
 
-        # Для CHECK режима — «затухание» последних пинов (чтобы UI видел вспышку)
-        self._check_hold_ms = 150
-        self._last_event_time = 0.0
+        # Таймер для CHECK режима
+        self.check_interval_s = max(0.02, check_interval_s)  # защитимся от 0
+        self._next_check_time = time.perf_counter()
 
     # --- Lifecycle ---
     def open(self):
@@ -207,35 +182,36 @@ class ControllerEmulator:
             self.framer.feed(data)
 
     def _tx_loop(self):
-        next_time = time.perf_counter()
         while not self._stop.is_set():
             now = time.perf_counter()
-            if now >= next_time:
-                self._send_status()
-                next_time = now + self.period_s
+
+            # Отправка только в CHECK режиме
+            if self.state.mode == CMD_MODE_CHECK_KEYBOARD and now >= self._next_check_time:
+                self._send_check_status()
+                self._next_check_time = now + self.check_interval_s
+
             time.sleep(0.001)
 
-    def _send_status(self):
+    # --- Формирование Ctrl->App пакетов ---
+    def _send_check_status(self):
         """
-        Формируем пакет Ctrl->App:
-        SOF | Length(=18) | Pin1 | Pin2 | LED[15] | Checksum
-        Pin1/Pin2:
-            - в CHECK режиме — последние «интересные» пины, но «затухают» через _check_hold_ms
-            - в RUN режиме — 0/0
+        CHECK: перебор pin/LED. На каждом шаге:
+        pin1 = i (1..15), pin2 = 0
+        leds[i-1] = 1, остальные = 0
         """
         if not self.ser:
             return
 
-        pin1, pin2 = (0, 0)
-        if self.state.mode_check:
-            # «вспышка» последних пинов на небольшое время
-            if (time.perf_counter() - self._last_event_time) * 1000 <= self._check_hold_ms:
-                pin1, pin2 = self.state.last_event_pins
-            else:
-                pin1, pin2 = (0, 0)
+        i = self.state.check_index
+        if i < 1 or i > 15:
+            i = 1
+        self.state.check_index = 1 + (i % 15)  # 1..15 по кругу
 
-        leds = self.state.compute_leds()
-        body = bytes([pin1 & 0xFF, pin2 & 0xFF] + [x & 0xFF for x in leds])
+        pin1, pin2 = i, i
+        leds = [0]*15
+        leds[i-1] = 1
+
+        body = bytes([pin1 & 0xFF, pin2 & 0xFF] + leds)
         frame_wo_crc = bytes([PROTOCOL_SOF, C2A_LENGTH]) + body
         crc = calc_checksum(frame_wo_crc)
         frame = frame_wo_crc + bytes([crc])
@@ -244,32 +220,57 @@ class ControllerEmulator:
             try:
                 self.ser.write(frame)
                 if self.verbose:
-                    print(f"[TX] {frame.hex(' ')}", file=sys.stderr)
+                    print(f"[TX][CHECK] idx={i} -> {frame.hex(' ')}", file=sys.stderr)
             except Exception as e:
                 if self.verbose:
                     print(f"[ERR] TX failed: {e}", file=sys.stderr)
 
-    # --- Handling incoming A2C packets ---
+    # --- Обработка входящих A2C ---
     def _on_a2c_packet(self, pkt: A2C_Packet):
-        if self.verbose:
-            print(f"[PKT] cmd=0x{pkt.command:02X} pin1={pkt.pin1} pin2={pkt.pin2}", file=sys.stderr)
+        # Переключение режимов
+        if pkt.command == CMD_MODE_CONFIGURE:
+            if self.verbose and self.state.mode != CMD_MODE_CONFIGURE:
+                print("[MODE] CONFIGURE", file=sys.stderr)
+            self.state.set_mode(CMD_MODE_CONFIGURE)
+            return
 
-        if pkt.command == CMD_BTN_PRESSED:
-            self._handle_press(pkt.pin1, pkt.pin2)
-        elif pkt.command == CMD_BTN_RELEASED:
-            self._handle_release(pkt.pin1, pkt.pin2)
-        elif pkt.command == CMD_MODE_CHECK_KEYBOARD:
-            self.state.set_mode_check(True)
-            # сбрасываем «вспышку», чтобы следующие пины были видны
-            self._last_event_time = time.perf_counter() - (self._check_hold_ms / 1000.0) - 1
-        elif pkt.command == CMD_MODE_RUN:
-            self.state.set_mode_check(False)
-        else:
+        if pkt.command == CMD_MODE_RUN:
+            if self.verbose and self.state.mode != CMD_MODE_RUN:
+                print("[MODE] RUN", file=sys.stderr)
+            self.state.set_mode(CMD_MODE_RUN)
+            return
+
+        if pkt.command == CMD_MODE_CHECK_KEYBOARD:
+            if self.verbose and self.state.mode != CMD_MODE_CHECK_KEYBOARD:
+                print("[MODE] CHECK_KEYBOARD", file=sys.stderr)
+            self.state.set_mode(CMD_MODE_CHECK_KEYBOARD)
+            # Сразу сдвинем таймер, чтобы немедленно отправить первый шаг
+            self._next_check_time = 0.0
+            return
+
+        # Поведение по режимам
+        if self.state.mode == CMD_MODE_CONFIGURE:
+            # В конфиге: ничего не шлём и считаем любые иные команды ошибкой
             if self.verbose:
-                print(f"[WARN] Unknown command 0x{pkt.command:02X}", file=sys.stderr)
+                print(f"[ERROR][CONFIGURE] Unexpected command 0x{pkt.command:02X} (ignored)", file=sys.stderr)
+            return
 
-        # Отправим статус сразу после команды (не дожидаясь таймера)
-        self._send_status()
+        if self.state.mode == CMD_MODE_RUN:
+            # В RUN: принимаем только нажатия/отпускания; ничего не отправляем
+            if pkt.command == CMD_BTN_PRESSED:
+                self._handle_press(pkt.pin1, pkt.pin2)
+            elif pkt.command == CMD_BTN_RELEASED:
+                self._handle_release(pkt.pin1, pkt.pin2)
+            else:
+                if self.verbose:
+                    print(f"[WARN][RUN] Ignoring non-press/release cmd 0x{pkt.command:02X}", file=sys.stderr)
+            return
+
+        if self.state.mode == CMD_MODE_CHECK_KEYBOARD:
+            # В CHECK входящие команды (кроме смены режима) игнорируем
+            if self.verbose:
+                print(f"[INFO][CHECK] Ignored cmd 0x{pkt.command:02X}", file=sys.stderr)
+            return
 
     def _handle_press(self, p1: int, p2: int):
         if not (1 <= p1 <= 15 and 1 <= p2 <= 15) or p1 == p2:
@@ -277,7 +278,8 @@ class ControllerEmulator:
                 print(f"[WARN] Ignoring bad press ({p1},{p2})", file=sys.stderr)
             return
         self.state.press(p1, p2)
-        self._last_event_time = time.perf_counter()
+        if self.verbose:
+            print(f"[PKT][RUN] press {p1}-{p2}", file=sys.stderr)
 
     def _handle_release(self, p1: int, p2: int):
         if not (1 <= p1 <= 15 and 1 <= p2 <= 15) or p1 == p2:
@@ -285,13 +287,13 @@ class ControllerEmulator:
                 print(f"[WARN] Ignoring bad release ({p1},{p2})", file=sys.stderr)
             return
         self.state.release(p1, p2)
-        self._last_event_time = time.perf_counter()
+        if self.verbose:
+            print(f"[PKT][RUN] release {p1}-{p2}", file=sys.stderr)
 
 
-# --- Вспомогательные утилиты для тестов (необязательно) ---
-def build_a2c(command: int, p1: int, p2: int) -> bytes:
+# --- Вспомогательные утилиты (локальный тест без UART) ---
+def build_a2c(command: int, p1: int = 0, p2: int = 0) -> bytes:
     """
-    Сборка пакета App->Ctrl для локальных тестов:
     SOF | Length(=4) | Cmd | Pin1 | Pin2 | Checksum
     """
     frame_wo_crc = bytes([PROTOCOL_SOF, A2C_LENGTH, command & 0xFF, p1 & 0xFF, p2 & 0xFF])
@@ -303,11 +305,12 @@ def main():
     ap = argparse.ArgumentParser(description="Keyboard Controller Emulator (serial)")
     ap.add_argument("--port", required=True, help="Serial port (e.g., COM7 or /dev/ttyUSB0)")
     ap.add_argument("--baud", type=int, default=115200, help="Baud rate")
-    ap.add_argument("--period", type=float, default=2.0, help="Status period in seconds (default 2.0 = 0.5 Hz)")
+    ap.add_argument("--check-interval", type=float, default=2.0,
+                    help="Interval (s) between steps in CHECK mode (default 2.0)")
     ap.add_argument("-v", "--verbose", action="store_true", help="Verbose logs to stderr")
     args = ap.parse_args()
 
-    emu = ControllerEmulator(args.port, args.baud, period_s=args.period, verbose=args.verbose)
+    emu = ControllerEmulator(args.port, args.baud, check_interval_s=args["check_interval"] if isinstance(args, dict) else args.check_interval, verbose=args.verbose)
     emu.open()
     emu.run()
 

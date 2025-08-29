@@ -28,6 +28,7 @@ signals:
     void appButtonReleased(uint8_t pin1, uint8_t pin2);
     void appEnterModeCheck();
     void appEnterModeRun();
+    void appEnterModeConfigure();
     void comPortSelected(const QString& portName);
 
     void updateDiodeStatus(uint8_t pin, bool isOn);
