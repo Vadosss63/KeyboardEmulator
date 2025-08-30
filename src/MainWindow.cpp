@@ -160,51 +160,21 @@ void MainWindow::setupToolbar()
 
 void MainWindow::setupMenus()
 {
-    comMenu = menuBar()->addMenu(tr("COM Port"));
-    connect(comMenu, &QMenu::aboutToShow, this, &MainWindow::refreshComPorts);
-}
+    comMenu = new ComPortMenu(this);
+    comMenu->createMenu(QStringLiteral("COM Port"));
+    comMenu->addToMenuBar(menuBar());
+    comMenu->setTestPortVisible(true, QStringLiteral("/tmp/ttyV1"));
 
-void MainWindow::refreshComPorts()
-{
-    comMenu->clear();
-    const auto ports = QSerialPortInfo::availablePorts();
-    for (const QSerialPortInfo& info : ports)
-    {
-        const QString name = info.portName();
+    comMenu->setCurrentPort(QString{});
 
-        QAction* act = comMenu->addAction(name);
-
-        connect(act,
-                &QAction::triggered,
-                [this, name]()
-                {
-                    qDebug() << "Selected COM port:" << name;
-                    emit comPortSelected(name);
-                });
-    }
-
-    {
-        // For testing purposes, add a dummy action
-        // This should be removed in production code
-        // It simulates a port selection for testing without actual hardware
-
-        QString testPortName = "/tmp/ttyV1";
-
-        QAction* actTest = comMenu->addAction(testPortName);
-
-        connect(actTest,
-                &QAction::triggered,
-                [this, testPortName]()
-                {
-                    qDebug() << "Selected COM port:" << testPortName;
-                    emit comPortSelected(testPortName);
-                });
-    }
-
-    if (ports.isEmpty())
-    {
-        comMenu->addAction(tr("No ports found"))->setEnabled(false);
-    }
+    connect(comMenu,
+            &ComPortMenu::portSelected,
+            this,
+            [this](const QString& name)
+            {
+                qDebug() << "Selected COM port:" << (name.isEmpty() ? "None" : name);
+                emit comPortSelected(name);
+            });
 }
 
 void MainWindow::updateStatus(uint8_t pin1, uint8_t pin2, const QVector<uint8_t>& leds)

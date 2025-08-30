@@ -6,6 +6,7 @@
 #include <QMenu>
 #include <cstdint>
 
+#include "ComPortMenu.h"
 #include "CustomScene.h"
 
 enum class WorkMode
@@ -62,7 +63,6 @@ private:
     void setupScene();
     void setupToolbar();
     void setupMenus();
-    void refreshComPorts();
 
     bool isWorkingMode() const;
     bool isModifyMode() const;
@@ -84,8 +84,7 @@ private:
     QAction* saveProjectAction;
     QAction* loadProjectAction;
 
-    QMenu* comMenu;
+    ComPortMenu* comMenu{};
 
-    /// TODO: Check initial state
     WorkMode currentWorkMode{WorkMode::Work};
 };

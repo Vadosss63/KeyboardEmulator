@@ -12,6 +12,8 @@ add_executable(${PROJECT_NAME} WIN32
     resources.qrc
     src/ButtonItem.cpp
     src/ButtonItem.h
+    src/ComPortMenu.cpp
+    src/ComPortMenu.h
     src/CustomScene.cpp
     src/CustomScene.h
     src/DiodeItem.cpp
