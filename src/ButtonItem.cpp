@@ -29,28 +29,25 @@ bool isCtrlButtonPressed(QGraphicsSceneMouseEvent* event)
 
 }
 
-ButtonItem::ButtonItem(qreal x, qreal y, qreal w, qreal h, QGraphicsItem* parent, uint8_t pin1, uint8_t pin2)
-    : ResizableRectItem(x, y, w, h, parent), m_normalBrush(Qt::transparent), m_activeBrush(QColor(0, 0, 0, 80))
-{
-    QPen pen(Qt::blue, 2);
-    pen.setStyle(Qt::DashLine);
-    setPen(pen);
-    setBrush(m_normalBrush);
-    setPin1(pin1);
-    setPin2(pin2);
-}
+ButtonItem::ButtonItem(qreal x, qreal y) : ButtonItem(ButtonDef{x, y}, nullptr) {}
 
 ButtonItem::ButtonItem(const ButtonDef& def, QGraphicsItem* parent)
-    : ButtonItem(def.rect.x(), def.rect.y(), def.rect.width(), def.rect.height(), parent, def.p1, def.p2)
+    : ResizableRectItem(def.rect.x(), def.rect.y(), def.rect.width(), def.rect.height(), parent)
 {
+    setColor(QColor(def.color));
+    setCircularShape(def.isCircular);
+    setPin1(def.p1);
+    setPin2(def.p2);
 }
 
 ButtonDef ButtonItem::getDefinition() const
 {
-    ButtonDef def;
-    def.rect = rectItem();
-    def.p1   = m_pin1;
-    def.p2   = m_pin2;
+    ButtonDef def{};
+    def.rect       = rectItem();
+    def.color      = color().name();
+    def.isCircular = isCircular();
+    def.p1         = m_pin1;
+    def.p2         = m_pin2;
     return def;
 }
 
@@ -68,7 +65,7 @@ void ButtonItem::setPin2(uint8_t pin)
 
 void ButtonItem::mousePressEvent(QGraphicsSceneMouseEvent* event)
 {
-    if (!m_clickable || m_active)
+    if (!m_clickable || isActive())
     {
         event->accept();
         return;
@@ -80,7 +77,7 @@ void ButtonItem::mousePressEvent(QGraphicsSceneMouseEvent* event)
         return;
     }
 
-    m_active = true;
+    setActive(true);
     updateAppearance();
     emit buttonPressed(m_pin1, m_pin2);
 
@@ -102,9 +99,9 @@ void ButtonItem::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
         return;
     }
 
-    if (m_active)
+    if (isActive())
     {
-        m_active = false;
+        setActive(false);
         updateAppearance();
         emit buttonReleased(m_pin1, m_pin2);
     }
@@ -117,9 +114,9 @@ void ButtonItem::onStatusUpdate(uint8_t pin1, uint8_t pin2, bool isPressed)
     if (pin1 == 0 && pin2 == 0)
     {
         // Reset all buttons
-        if (m_active)
+        if (isActive())
         {
-            m_active = false;
+            setActive(false);
             updateAppearance();
         }
         return;
@@ -130,7 +127,7 @@ void ButtonItem::onStatusUpdate(uint8_t pin1, uint8_t pin2, bool isPressed)
         return;
     }
 
-    m_active = isPressed;
+    setActive(isPressed);
     updateAppearance();
 }
 
@@ -154,9 +151,6 @@ void ButtonItem::setupDeleteItemAction(QAction* deleteAction)
 
 void ButtonItem::addPinConfigMenu(QMenu& menu)
 {
-    QAction* squareShape = menu.addAction(tr("Квадратная форма"));
-    connect(squareShape, &QAction::triggered, this, &ButtonItem::makeRectShape);
-
     QMenu* pin1Menu = menu.addMenu(tr("Установить пин 1"));
     QMenu* pin2Menu = menu.addMenu(tr("Установить пин 2"));
 
@@ -175,12 +169,6 @@ void ButtonItem::updateTextInfo()
 {
     const QString info = QString("P1:%1\nP2:%2").arg(m_pin1).arg(m_pin2);
     setInfoText(info);
-}
-
-void ButtonItem::updateAppearance()
-{
-    setBrush(m_active ? m_activeBrush : m_normalBrush);
-    update();
 }
 
 void ButtonItem::setClickable(bool isClickable)

@@ -1,22 +1,35 @@
 #pragma once
 
 #include <QImage>
+#include <QString>
 #include <QtCore>
 
 struct ButtonDef
 {
-    QString id;
-    int     p1 = 0;
-    int     p2 = 0;
-    QRectF  rect{0, 0, 0, 0};
+    ButtonDef() = default;
+    ButtonDef(qreal x, qreal y) : rect{x, y, 80, 80} {}
+
+    QString color = "#0000FF";
+
+    bool isCircular = false;
+
+    int    p1 = 0;
+    int    p2 = 0;
+    QRectF rect{0, 0, 0, 0};
 };
 
 struct LedDef
 {
-    QString id;
-    int     pin      = 0;
-    bool    inverted = false;
-    QRectF  rect{0, 0, 0, 0};
+    LedDef() = default;
+    LedDef(qreal x, qreal y) : rect{x, y, 80, 80} {}
+
+    QString color = "#00FF00";
+
+    bool isCircular = true;
+
+    int    pin      = 0;
+    bool   inverted = false;
+    QRectF rect{0, 0, 0, 0};
 };
 
 class Project

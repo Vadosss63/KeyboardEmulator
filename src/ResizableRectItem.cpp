@@ -1,8 +1,15 @@
 #include "ResizableRectItem.h"
 
+#include <QBrush>
+#include <QColorDialog>
+#include <QFont>
 #include <QGraphicsSceneContextMenuEvent>
+#include <QGraphicsSceneMouseEvent>
 #include <QMenu>
+#include <QPainterPath>
+#include <QPen>
 #include <QSignalBlocker>
+#include <QStyleOptionGraphicsItem>
 
 #include "ResizeHandle.h"
 
@@ -39,6 +46,27 @@ void ResizableRectItem::setResizable(bool on)
     updateHandles();
 }
 
+bool ResizableRectItem::isCircular() const
+{
+    return m_circular;
+}
+
+void ResizableRectItem::setCircularShape(bool circular)
+{
+    m_circular = circular;
+    updateAppearance();
+}
+
+bool ResizableRectItem::isActive() const
+{
+    return m_active;
+}
+
+void ResizableRectItem::setActive(bool active)
+{
+    m_active = active;
+}
+
 bool ResizableRectItem::isModifyMod() const
 {
     return m_resizable;
@@ -53,6 +81,59 @@ QRectF ResizableRectItem::rectItem() const
 void ResizableRectItem::setInfoText(const QString& text)
 {
     infoItem->setPlainText(text);
+}
+
+void ResizableRectItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget)
+{
+    Q_UNUSED(widget);
+    painter->setPen(pen());
+    if (option->state & QStyle::State_Selected)
+    {
+        QPen selPen = pen();
+        selPen.setStyle(Qt::DashLine);
+        painter->setPen(selPen);
+    }
+    painter->setBrush(brush());
+
+    if (isCircular())
+    {
+        painter->drawEllipse(rect());
+        return;
+    }
+
+    painter->drawRect(rect());
+}
+
+QPainterPath ResizableRectItem::shape() const
+{
+    QPainterPath path;
+    if (isCircular())
+    {
+        path.addEllipse(rect());
+    }
+    else
+    {
+        path.addRect(rect());
+    }
+    return path;
+}
+
+void ResizableRectItem::setColor(const QColor& color)
+{
+    m_color       = color;
+    m_normalBrush = Qt::transparent;
+    m_activeBrush = QColor(color.red(), color.green(), color.blue(), 100);
+
+    QPen pen(color, 2);
+
+    setPen(pen);
+    setBrush(m_normalBrush);
+    update();
+}
+
+QColor ResizableRectItem::color() const
+{
+    return m_color;
 }
 
 void ResizableRectItem::makeRectShape()
@@ -98,10 +179,30 @@ void ResizableRectItem::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
     menu.exec(event->screenPos());
 }
 
+void ResizableRectItem::changeColor()
+{
+    QColor newColor = QColorDialog::getColor(color(), nullptr, tr("Выберите цвет"));
+    if (!newColor.isValid())
+    {
+        return;
+    }
+    setColor(newColor);
+}
+
 void ResizableRectItem::addDeleteItemAction(QMenu& menu)
 {
     QAction* deleteAction = menu.addAction("Удалить");
     setupDeleteItemAction(deleteAction);
+    QAction* colorAction = menu.addAction("Цвет");
+    connect(colorAction, &QAction::triggered, this, &ResizableRectItem::changeColor);
+    QAction* shapeAction = menu.addAction(tr("Выровнять"));
+    connect(shapeAction, &QAction::triggered, this, &ResizableRectItem::makeRectShape);
+
+    QMenu*   shapeMenu  = menu.addMenu(tr("Форма"));
+    QAction* rectAction = shapeMenu->addAction(tr("Квадрат"));
+    connect(rectAction, &QAction::triggered, [this]() { setCircularShape(false); });
+    QAction* ellipseAction = shapeMenu->addAction(tr("Круг"));
+    connect(ellipseAction, &QAction::triggered, [this]() { setCircularShape(true); });
 }
 
 void ResizableRectItem::setupDeleteItemAction(QAction* /*deleteAction*/) {}
@@ -152,7 +253,6 @@ void ResizableRectItem::initHandles()
     for (int i = 0; i < HandleCount; i++)
     {
         auto* h = new ResizeHandle(this, i);
-        // h->setParentItem(this);
         connect(h, &ResizeHandle::moved, this, [this](int idx, const QPointF& p) { handleMoved(idx, p); });
         m_handles[i] = h;
         h->setVisible(m_resizable);
@@ -182,4 +282,10 @@ void ResizableRectItem::updateRect(const QRectF& rect)
     prepareGeometryChange();
     setRect(rect);
     updateHandles();
+}
+
+void ResizableRectItem::updateAppearance()
+{
+    setBrush(isActive() ? m_activeBrush : m_normalBrush);
+    update();
 }

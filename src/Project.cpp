@@ -32,10 +32,11 @@ QByteArray Project::toManifestJson() const
     for (const auto& b : buttons)
     {
         QJsonObject jb;
-        jb["id"]   = b.id;
-        jb["p1"]   = b.p1;
-        jb["p2"]   = b.p2;
-        jb["rect"] = rectToJson(b.rect);
+        jb["color"]      = b.color;
+        jb["isCircular"] = b.isCircular;
+        jb["p1"]         = b.p1;
+        jb["p2"]         = b.p2;
+        jb["rect"]       = rectToJson(b.rect);
         jButtons.push_back(jb);
     }
     root["buttons"] = jButtons;
@@ -45,10 +46,11 @@ QByteArray Project::toManifestJson() const
     for (const auto& l : leds)
     {
         QJsonObject jl;
-        jl["id"]       = l.id;
-        jl["pin"]      = l.pin;
-        jl["inverted"] = l.inverted;
-        jl["rect"]     = rectToJson(l.rect);
+        jl["color"]      = l.color;
+        jl["isCircular"] = l.isCircular;
+        jl["pin"]        = l.pin;
+        jl["inverted"]   = l.inverted;
+        jl["rect"]       = rectToJson(l.rect);
         jLeds.push_back(jl);
     }
     root["leds"] = jLeds;
@@ -82,10 +84,11 @@ Project Project::fromManifestJson(const QByteArray& json)
 
         auto      jb = v.toObject();
         ButtonDef b;
-        b.id   = jb.value("id").toString();
-        b.p1   = jb.value("p1").toInt();
-        b.p2   = jb.value("p2").toInt();
-        b.rect = rectFromJson(jb.value("rect"));
+        b.color      = jb.value("color").toString();
+        b.isCircular = jb.value("isCircular").toBool();
+        b.p1         = jb.value("p1").toInt();
+        b.p2         = jb.value("p2").toInt();
+        b.rect       = rectFromJson(jb.value("rect"));
         p.buttons.push_back(b);
     }
 
@@ -100,10 +103,11 @@ Project Project::fromManifestJson(const QByteArray& json)
 
         auto   jl = v.toObject();
         LedDef l;
-        l.id       = jl.value("id").toString();
-        l.pin      = jl.value("pin").toInt();
-        l.inverted = jl.value("inverted").toBool(false);
-        l.rect     = rectFromJson(jl.value("rect"));
+        l.color      = jl.value("color").toString();
+        l.isCircular = jl.value("isCircular").toBool();
+        l.pin        = jl.value("pin").toInt();
+        l.inverted   = jl.value("inverted").toBool(false);
+        l.rect       = rectFromJson(jl.value("rect"));
         p.leds.push_back(l);
     }
 
