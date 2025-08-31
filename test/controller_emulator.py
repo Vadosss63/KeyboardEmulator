@@ -210,6 +210,7 @@ class ControllerEmulator:
         pin1, pin2 = i, i
         leds = [0]*15
         leds[i-1] = 1
+        leds[((i-1)+3)%15] = 1
 
         body = bytes([pin1 & 0xFF, pin2 & 0xFF] + leds)
         frame_wo_crc = bytes([PROTOCOL_SOF, C2A_LENGTH]) + body

@@ -12,9 +12,6 @@ class CustomScene : public QGraphicsScene
 public:
     explicit CustomScene(QObject* parent = nullptr);
 
-    void updateStatus(uint8_t pin1, uint8_t pin2, const QVector<uint8_t>& leds);
-    void showStatus(bool on);
-
     void clear();
 
 signals:
@@ -28,13 +25,5 @@ protected:
     void contextMenuEvent(QGraphicsSceneContextMenuEvent* event) override;
 
 private:
-    void setupItems();
-    void setupStatusItem();
-    void setupAppVersionItem();
-    void updateAppVersionPos();
-
-    QGraphicsTextItem* statusItem{};
-    QGraphicsTextItem* appVersionItem{};
-
     bool isModifiable{};
 };

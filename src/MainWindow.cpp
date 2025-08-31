@@ -62,7 +62,6 @@ void MainWindow::handleNewWorkMode(WorkMode mode)
     currentWorkMode = mode;
     emit modifyModStatusChanged(isModifyMode());
     emit workingModStatusChanged(isWorkingMode());
-    scene->showStatus(isCheckMode());
 }
 
 void MainWindow::setupToolbar()
@@ -137,7 +136,8 @@ void MainWindow::setupToolbar()
             &QAction::triggered,
             [this]()
             {
-                QString path = QFileDialog::getOpenFileName(this, "Select Keyboard Image", {}, "Images (*.png *.jpg)");
+                QString path =
+                    QFileDialog::getOpenFileName(this, "Выбор изображения клавиатуры", {}, "Images (*.png *.jpg)");
                 if (!path.isEmpty())
                 {
                     scene->clear();
@@ -156,12 +156,19 @@ void MainWindow::setupToolbar()
     loadProjectAction = tb->addAction("Загрузить проект");
     connect(loadProjectAction, &QAction::triggered, this, &MainWindow::loadProject);
     connect(this, &MainWindow::modifyModStatusChanged, loadProjectAction, &QAction::setVisible);
+
+    statusAction = tb->addAction("Pins: P1: , P2: , LEDs: ");
+    statusAction->setCheckable(false);
+    statusAction->setVisible(false);
+    connect(this,
+            &MainWindow::workModeChanged,
+            [this](WorkMode mode) { statusAction->setVisible(mode == WorkMode::Check); });
 }
 
 void MainWindow::setupMenus()
 {
     comMenu = new ComPortMenu(this);
-    comMenu->createMenu(QStringLiteral("COM Port"));
+    comMenu->createMenu(QStringLiteral("COM Порт"));
     comMenu->addToMenuBar(menuBar());
     comMenu->setTestPortVisible(true, QStringLiteral("/tmp/ttyV1"));
 
@@ -175,11 +182,30 @@ void MainWindow::setupMenus()
                 qDebug() << "Selected COM port:" << (name.isEmpty() ? "None" : name);
                 emit comPortSelected(name);
             });
+    QMenu* versionMenu = menuBar()->addMenu("Версия ПО");
+    versionMenu->addAction(QStringLiteral(APP_VERSION));
 }
 
 void MainWindow::updateStatus(uint8_t pin1, uint8_t pin2, const QVector<uint8_t>& leds)
 {
-    scene->updateStatus(pin1, pin2, leds);
+    QString statusText      = QString("Pins: P1:%1, P2:%2, LEDs: ").arg(pin1).arg(pin2);
+    int     countActiveLeds = 0;
+    for (int i = 0; i < leds.size(); ++i)
+    {
+        if (!leds[i])
+        {
+            continue;
+        }
+
+        if (countActiveLeds > 0)
+        {
+            statusText.append(", ");
+        }
+
+        statusText.append(QString("L%1").arg(i + 1));
+        countActiveLeds++;
+    }
+    statusAction->setText(statusText);
 
     emit updateButtonStatus(0, 0, false);
 
@@ -242,7 +268,7 @@ void MainWindow::deleteDiode(DiodeItem* diode)
 
 void MainWindow::saveProject()
 {
-    QString path = QFileDialog::getSaveFileName(this, "Save Project", {}, "Keyboard Project (*.kbk)");
+    QString path = QFileDialog::getSaveFileName(this, "Сохранить проект", {}, "Keyboard Project (*.kbk)");
 
     if (path.isEmpty())
     {
@@ -278,7 +304,7 @@ void MainWindow::saveProject()
 
 void MainWindow::loadProject()
 {
-    QString path = QFileDialog::getOpenFileName(this, "Load Project", {}, "Keyboard Project (*.kbk)");
+    QString path = QFileDialog::getOpenFileName(this, "Загрузить проект", {}, "Keyboard Project (*.kbk)");
     if (path.isEmpty())
     {
         return;

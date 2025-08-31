@@ -141,9 +141,9 @@ void ButtonItem::extendDerivedContextMenu(QMenu& menu)
         addPinConfigMenu(menu);
     }
 
-    QAction* pin1Act = menu.addAction(tr("Pin1: %1").arg(m_pin1));
+    QAction* pin1Act = menu.addAction(tr("Пин1: %1").arg(m_pin1));
     pin1Act->setEnabled(false);
-    QAction* pin2Act = menu.addAction(tr("Pin2: %1").arg(m_pin2));
+    QAction* pin2Act = menu.addAction(tr("Пин2: %1").arg(m_pin2));
     pin2Act->setEnabled(false);
 }
 
@@ -154,8 +154,11 @@ void ButtonItem::setupDeleteItemAction(QAction* deleteAction)
 
 void ButtonItem::addPinConfigMenu(QMenu& menu)
 {
-    QMenu* pin1Menu = menu.addMenu(tr("Set Pin 1"));
-    QMenu* pin2Menu = menu.addMenu(tr("Set Pin 2"));
+    QAction* squareShape = menu.addAction(tr("Квадратная форма"));
+    connect(squareShape, &QAction::triggered, this, &ButtonItem::makeRectShape);
+
+    QMenu* pin1Menu = menu.addMenu(tr("Установить пин 1"));
+    QMenu* pin2Menu = menu.addMenu(tr("Установить пин 2"));
 
     for (uint8_t i = 1; i <= 15; ++i)
     {

@@ -91,9 +91,9 @@ void DiodeItem::extendDerivedContextMenu(QMenu& menu)
         addConfigMenu(menu);
     }
 
-    QAction* pinAct = menu.addAction(tr("Pin: %1").arg(m_pin));
+    QAction* pinAct = menu.addAction(tr("Пин: %1").arg(m_pin));
     pinAct->setEnabled(false);
-    QAction* invAct = menu.addAction(tr("Inverted: %1").arg(m_inverted));
+    QAction* invAct = menu.addAction(tr("Инверсия: %1").arg(m_inverted));
     invAct->setEnabled(false);
 }
 
@@ -104,8 +104,11 @@ void DiodeItem::setupDeleteItemAction(QAction* deleteAction)
 
 void DiodeItem::addConfigMenu(QMenu& menu)
 {
-    QMenu* pinMenu = menu.addMenu(tr("Set Pin"));
-    QMenu* invMenu = menu.addMenu(tr("Inversion"));
+    QAction* circleShape = menu.addAction(tr("Круглая форма"));
+    connect(circleShape, &QAction::triggered, this, &DiodeItem::makeRectShape);
+
+    QMenu* pinMenu = menu.addMenu(tr("Установить пин"));
+    QMenu* invMenu = menu.addMenu(tr("Инверсия"));
 
     // Pin selection 1..15
     for (uint8_t i = 1; i <= 15; ++i)

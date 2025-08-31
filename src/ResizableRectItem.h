@@ -27,6 +27,8 @@ public:
 public slots:
     void setResizable(bool on);
 
+    void makeRectShape();
+
 protected:
     QVariant itemChange(GraphicsItemChange change, const QVariant& value) override;
 
@@ -48,6 +50,8 @@ private:
     void addDeleteItemAction(QMenu& menu);
     void initHandles();
     void updateHandles();
+
+    void updateRect(const QRectF& rect);
 
     bool m_resizable{};
 

@@ -55,6 +55,18 @@ void ResizableRectItem::setInfoText(const QString& text)
     infoItem->setPlainText(text);
 }
 
+void ResizableRectItem::makeRectShape()
+{
+    const QRectF& r = rect();
+    if (r.width() > r.height())
+    {
+        updateRect(QRectF(r.x(), r.y(), r.height(), r.height()));
+        return;
+    }
+
+    updateRect(QRectF(r.x(), r.y(), r.width(), r.width()));
+}
+
 QVariant ResizableRectItem::itemChange(GraphicsItemChange change, const QVariant& value)
 {
     QVariant v = QGraphicsRectItem::itemChange(change, value);
@@ -132,11 +144,7 @@ void ResizableRectItem::handleMoved(int handleIndex, const QPointF& scenePos)
         newRect.setBottomLeft(scenePos);
     }
 
-    prepareGeometryChange();
-
-    setRect(newRect.normalized());
-
-    updateHandles();
+    updateRect(newRect);
 }
 
 void ResizableRectItem::initHandles()
@@ -167,4 +175,11 @@ void ResizableRectItem::updateHandles()
 
     const QPointF infoPos = r.topRight() + QPointF{10, 10};
     infoItem->setPos(infoPos);
+}
+
+void ResizableRectItem::updateRect(const QRectF& rect)
+{
+    prepareGeometryChange();
+    setRect(rect);
+    updateHandles();
 }

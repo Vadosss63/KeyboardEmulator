@@ -68,23 +68,25 @@ private:
     bool isModifyMode() const;
     bool isCheckMode() const;
 
-    QPixmap backgroundImage;
+    QPixmap backgroundImage{};
 
-    CustomScene*   scene;
-    QGraphicsView* view;
+    CustomScene*   scene{nullptr};
+    QGraphicsView* view{nullptr};
 
-    QList<DiodeItem*>  diodeItems;
-    QList<ButtonItem*> buttonItems;
+    QList<DiodeItem*>  diodeItems{};
+    QList<ButtonItem*> buttonItems{};
 
-    QAction* loadImgAction;
-    QAction* modeCheckAction;
-    QAction* modeRunAction;
-    QAction* modifyAction;
+    QAction* loadImgAction{nullptr};
+    QAction* modeCheckAction{nullptr};
+    QAction* modeRunAction{nullptr};
+    QAction* modifyAction{nullptr};
 
-    QAction* saveProjectAction;
-    QAction* loadProjectAction;
+    QAction* saveProjectAction{nullptr};
+    QAction* loadProjectAction{nullptr};
 
-    ComPortMenu* comMenu{};
+    QAction* statusAction{nullptr};
+
+    ComPortMenu* comMenu{nullptr};
 
     WorkMode currentWorkMode{WorkMode::Work};
 };
