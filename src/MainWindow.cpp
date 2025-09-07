@@ -5,28 +5,28 @@
 #include <QDebug>
 #include <QFileDialog>
 #include <QGraphicsPixmapItem>
+#include <QLabel>
 #include <QMenuBar>
+#include <QPushButton>
 #include <QSerialPortInfo>
 #include <QToolBar>
 #include <QToolButton>
+#include <QVBoxLayout>
 
 #include "ProjectIO.h"
 
 MainWindow::MainWindow(QWidget* parent)
-    : QMainWindow(parent), scene(new CustomScene(this)), view(new QGraphicsView(scene, this))
+    : QMainWindow(parent)
+    , startWidget(new QWidget(this))
+    , scene(new CustomScene(this))
+    , view(new QGraphicsView(scene, this))
+    , stackedWidget(new QStackedWidget(this))
 {
-    setCentralWidget(view);
+    setWindowTitle("Эмулятор клавиатуры");
+
     setupScene();
     setupToolbar();
     setupMenus();
-
-    backgroundImage.load(":/resources/keyboard.png");
-    if (!backgroundImage.isNull())
-    {
-        auto* defaultItem = new QGraphicsPixmapItem(backgroundImage);
-        defaultItem->setZValue(-1);
-        scene->addItem(defaultItem);
-    }
 
     connect(scene, &CustomScene::diodeAdded, this, &MainWindow::addDiodeItem);
     connect(scene, &CustomScene::buttonAdded, this, &MainWindow::addButtonItem);
@@ -34,6 +34,30 @@ MainWindow::MainWindow(QWidget* parent)
     connect(this, &MainWindow::modifyModStatusChanged, scene, &CustomScene::setModifiable);
 
     emit workModeChanged(WorkMode::Modify);
+    createStartWidget();
+
+    stackedWidget->addWidget(startWidget);
+    stackedWidget->addWidget(view);
+    stackedWidget->setCurrentWidget(startWidget);
+    setCentralWidget(stackedWidget);
+
+    connect(this, &MainWindow::projectReady, &MainWindow::enableSceneMode);
+}
+
+void MainWindow::createStartWidget()
+{
+    auto* layout = new QVBoxLayout(startWidget);
+    layout->setAlignment(Qt::AlignCenter);
+    auto* label = new QLabel("Выберите изображение или загрузите проект:", startWidget);
+    layout->addWidget(label);
+    auto* btnLoadImage = new QPushButton("Загрузить изображение", startWidget);
+    layout->addWidget(btnLoadImage);
+    connect(btnLoadImage, &QPushButton::clicked, this, &MainWindow::loadImage);
+    auto* btnLoadProject = new QPushButton("Загрузить проект", startWidget);
+    layout->addWidget(btnLoadProject);
+    connect(btnLoadProject, &QPushButton::clicked, this, &MainWindow::loadProject);
+    startWidget->setFixedWidth(800);
+    startWidget->setFixedHeight(600);
 }
 
 void MainWindow::setupScene()
@@ -97,6 +121,9 @@ void MainWindow::setupToolbar()
 
     tb->addWidget(modeBtn);
 
+    connect(this, &MainWindow::projectReady, modeBtn, &QToolButton::setEnabled);
+    modeBtn->setEnabled(false);
+
     connect(group,
             &QActionGroup::triggered,
             this,
@@ -132,26 +159,15 @@ void MainWindow::setupToolbar()
             });
 
     loadImgAction = tb->addAction("Загрузка изображения");
-    connect(loadImgAction,
-            &QAction::triggered,
-            [this]()
-            {
-                QString path =
-                    QFileDialog::getOpenFileName(this, "Выбор изображения клавиатуры", {}, "Images (*.png *.jpg)");
-                if (!path.isEmpty())
-                {
-                    scene->clear();
-                    auto* pix = new QGraphicsPixmapItem(QPixmap(path));
-                    pix->setZValue(-1);
-                    scene->addItem(pix);
-                }
-            });
+    connect(loadImgAction, &QAction::triggered, this, &MainWindow::loadImage);
 
     connect(this, &MainWindow::modifyModStatusChanged, loadImgAction, &QAction::setVisible);
 
     saveProjectAction = tb->addAction("Сохранить проект");
     connect(saveProjectAction, &QAction::triggered, this, &MainWindow::saveProject);
     connect(this, &MainWindow::modifyModStatusChanged, saveProjectAction, &QAction::setVisible);
+    connect(this, &MainWindow::projectReady, saveProjectAction, &QAction::setEnabled);
+    saveProjectAction->setEnabled(false);
 
     loadProjectAction = tb->addAction("Загрузить проект");
     connect(loadProjectAction, &QAction::triggered, this, &MainWindow::loadProject);
@@ -163,6 +179,22 @@ void MainWindow::setupToolbar()
     connect(this,
             &MainWindow::workModeChanged,
             [this](WorkMode mode) { statusAction->setVisible(mode == WorkMode::Check); });
+}
+
+void MainWindow::loadImage()
+{
+    QString path = QFileDialog::getOpenFileName(this, "Выбор изображения клавиатуры", {}, "Images (*.png *.jpg)");
+    if (path.isEmpty())
+    {
+        return;
+    }
+
+    setBackgroundImage(QPixmap(path));
+}
+
+void MainWindow::enableSceneMode(bool enable)
+{
+    stackedWidget->setCurrentWidget(enable ? view : startWidget);
 }
 
 void MainWindow::setupMenus()
@@ -317,17 +349,8 @@ void MainWindow::loadProject()
         return;
     }
 
-    // Clear current items
-    scene->clear();
-
-    diodeItems.clear();
-    buttonItems.clear();
-
     // Restore background
-    backgroundImage = QPixmap::fromImage(project.background);
-    auto* pix       = new QGraphicsPixmapItem(backgroundImage);
-    pix->setZValue(-1);
-    scene->addItem(pix);
+    setBackgroundImage(QPixmap::fromImage(project.background));
 
     // Restore LEDs
     for (const auto& ledDef : project.leds)
@@ -346,4 +369,23 @@ void MainWindow::loadProject()
     }
 
     qDebug() << "Project loaded successfully";
+}
+
+void MainWindow::clearItems()
+{
+    scene->clear();
+
+    diodeItems.clear();
+    buttonItems.clear();
+}
+
+void MainWindow::setBackgroundImage(const QPixmap& pixmap)
+{
+    clearItems();
+    backgroundImage = pixmap;
+    auto* pix       = new QGraphicsPixmapItem(backgroundImage);
+    pix->setZValue(-1);
+    scene->addItem(pix);
+
+    emit projectReady(true);
 }

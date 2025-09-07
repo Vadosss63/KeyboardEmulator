@@ -1,5 +1,4 @@
 <RCC>
   <qresource prefix="/">
-    <file>resources/keyboard.png</file>
   </qresource>
 </RCC>

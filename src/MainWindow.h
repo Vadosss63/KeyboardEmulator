@@ -4,6 +4,7 @@
 #include <QLabel>
 #include <QMainWindow>
 #include <QMenu>
+#include <QStackedWidget>
 #include <cstdint>
 
 #include "ComPortMenu.h"
@@ -41,6 +42,8 @@ signals:
     void modifyModStatusChanged(bool isModifiable);
     void workingModStatusChanged(bool isActive);
 
+    void projectReady(bool isReady);
+
 public slots:
     // Controller → View
     void updateStatus(uint8_t pin1, uint8_t pin2, const QVector<uint8_t>& leds);
@@ -58,15 +61,28 @@ private slots:
 private slots:
     void deleteButton(ButtonItem* button);
     void deleteDiode(DiodeItem* diode);
+    void loadImage();
+
+    void enableSceneMode(bool enable);
 
 private:
+    void createStartWidget();
+
     void setupScene();
     void setupToolbar();
+
     void setupMenus();
+
+    void clearItems();
+    void setBackgroundImage(const QPixmap& pixmap);
 
     bool isWorkingMode() const;
     bool isModifyMode() const;
     bool isCheckMode() const;
+
+    QWidget* startWidget{nullptr};
+
+    QStackedWidget* stackedWidget{nullptr};
 
     QPixmap backgroundImage{};
 
