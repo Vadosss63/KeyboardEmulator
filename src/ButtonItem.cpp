@@ -63,6 +63,11 @@ void ButtonItem::setPin2(uint8_t pin)
     updateTextInfo();
 }
 
+ResizableRectItem* ButtonItem::clone() const
+{
+    return new ButtonItem(getDefinition());
+}
+
 void ButtonItem::mousePressEvent(QGraphicsSceneMouseEvent* event)
 {
     if (!m_clickable || isActive())

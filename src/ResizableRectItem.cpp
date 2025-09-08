@@ -203,6 +203,9 @@ void ResizableRectItem::addDeleteItemAction(QMenu& menu)
     connect(rectAction, &QAction::triggered, [this]() { setCircularShape(false); });
     QAction* ellipseAction = shapeMenu->addAction(tr("Круг"));
     connect(ellipseAction, &QAction::triggered, [this]() { setCircularShape(true); });
+
+    QAction* copyAction = menu.addAction(tr("Копировать"));
+    connect(copyAction, &QAction::triggered, [this]() { emit itemCopied(this); });
 }
 
 void ResizableRectItem::setupDeleteItemAction(QAction* /*deleteAction*/) {}

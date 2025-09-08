@@ -33,6 +33,11 @@ public:
 
     bool isCircular() const;
 
+    virtual ResizableRectItem* clone() const = 0;
+
+signals:
+    void itemCopied(ResizableRectItem* item);
+
 public slots:
     void setResizable(bool on);
 

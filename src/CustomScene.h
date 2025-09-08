@@ -14,9 +14,13 @@ public:
 
     void clear();
 
+    void setPasteEnabled(bool isEnabled);
+
 signals:
     void diodeAdded(DiodeItem* diode);
     void buttonAdded(ButtonItem* button);
+
+    void pasteItem(QPointF pos);
 
 public slots:
     void setModifiable(bool isMod);
@@ -26,4 +30,5 @@ protected:
 
 private:
     bool isModifiable{};
+    bool isPasteEnabled{false};
 };

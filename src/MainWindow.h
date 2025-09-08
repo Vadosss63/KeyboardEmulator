@@ -65,6 +65,10 @@ private slots:
 
     void enableSceneMode(bool enable);
 
+    void copyItem(ResizableRectItem* item);
+
+    void pasteItem(QPointF pos);
+
 private:
     void createStartWidget();
 
@@ -105,4 +109,6 @@ private:
     ComPortMenu* comMenu{nullptr};
 
     WorkMode currentWorkMode{WorkMode::Work};
+
+    ResizableRectItem* copiedItem{nullptr};
 };

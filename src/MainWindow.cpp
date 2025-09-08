@@ -30,6 +30,8 @@ MainWindow::MainWindow(QWidget* parent)
 
     connect(scene, &CustomScene::diodeAdded, this, &MainWindow::addDiodeItem);
     connect(scene, &CustomScene::buttonAdded, this, &MainWindow::addButtonItem);
+    connect(scene, &CustomScene::pasteItem, this, &MainWindow::pasteItem);
+
     connect(this, &MainWindow::workModeChanged, this, &MainWindow::handleNewWorkMode);
     connect(this, &MainWindow::modifyModStatusChanged, scene, &CustomScene::setModifiable);
 
@@ -197,6 +199,41 @@ void MainWindow::enableSceneMode(bool enable)
     stackedWidget->setCurrentWidget(enable ? view : startWidget);
 }
 
+void MainWindow::copyItem(ResizableRectItem* item)
+{
+    copiedItem = item ? item->clone() : nullptr;
+    scene->setPasteEnabled(copiedItem != nullptr);
+}
+
+void MainWindow::pasteItem(QPointF pos)
+{
+    if (!copiedItem)
+    {
+        return;
+    }
+
+    auto* newItem = copiedItem->clone();
+    // TODO: Improve position
+    newItem->setPos(newItem->pos() + QPointF(10, 10));
+
+    if (DiodeItem* diode = dynamic_cast<DiodeItem*>(newItem))
+    {
+        addDiodeItem(diode);
+        scene->addItem(diode);
+        return;
+    }
+
+    if (ButtonItem* button = dynamic_cast<ButtonItem*>(newItem))
+    {
+        addButtonItem(button);
+        scene->addItem(button);
+        return;
+    }
+
+    delete newItem;
+    return;
+}
+
 void MainWindow::setupMenus()
 {
     comMenu = new ComPortMenu(this);
@@ -260,6 +297,7 @@ void MainWindow::addDiodeItem(DiodeItem* diode)
 void MainWindow::addResizableItem(ResizableRectItem* item)
 {
     connect(this, &MainWindow::modifyModStatusChanged, item, &ResizableRectItem::setResizable);
+    connect(item, &ResizableRectItem::itemCopied, this, &MainWindow::copyItem);
     item->setResizable(isModifyMode());
 }
 
@@ -377,6 +415,8 @@ void MainWindow::clearItems()
 
     diodeItems.clear();
     buttonItems.clear();
+
+    copiedItem = nullptr;
 }
 
 void MainWindow::setBackgroundImage(const QPixmap& pixmap)

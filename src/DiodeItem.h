@@ -21,6 +21,8 @@ public:
     void setPin(uint8_t pin);
     void setInverted(bool inverted);
 
+    ResizableRectItem* clone() const override;
+
 public slots:
     void onStatusUpdate(uint8_t pin, bool isOn);
 

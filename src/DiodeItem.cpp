@@ -43,6 +43,11 @@ void DiodeItem::setInverted(bool inverted)
     onStatusUpdate(m_pin, false);
 }
 
+ResizableRectItem* DiodeItem::clone() const
+{
+    return new DiodeItem(getDefinition());
+}
+
 void DiodeItem::onStatusUpdate(uint8_t pin, bool isOn)
 {
     if (pin != m_pin)
