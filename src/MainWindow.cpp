@@ -276,14 +276,18 @@ void MainWindow::updateStatus(uint8_t pin1, uint8_t pin2, const QVector<uint8_t>
     }
     statusAction->setText(statusText);
 
-    emit updateButtonStatus(0, 0, false);
-
-    emit updateButtonStatus(pin1, pin2, true);
-
     for (int i = 0; i < leds.size(); ++i)
     {
         emit updateDiodeStatus(i + 1, leds[i]);
     }
+
+    if (!isCheckMode())
+    {
+        return;
+    }
+
+    emit updateButtonStatus(0, 0, false);
+    emit updateButtonStatus(pin1, pin2, true);
 }
 
 void MainWindow::addDiodeItem(DiodeItem* diode)

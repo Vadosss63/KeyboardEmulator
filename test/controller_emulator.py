@@ -12,17 +12,16 @@ except ImportError:
     serial = None
 
 
-# --- Протокол из заголовка ---
+
 PROTOCOL_SOF = 0xAA
 
-# Команды App -> Ctrl
+# App -> Ctrl
 CMD_BTN_PRESSED           = 0x01
 CMD_BTN_RELEASED          = 0x02
 CMD_MODE_CHECK_KEYBOARD   = 0x03
 CMD_MODE_RUN              = 0x04
 CMD_MODE_CONFIGURE        = 0x05   # новое
 
-# Длины «payload+checksum» (байты после поля Length и ВКЛЮЧАЯ checksum)
 A2C_LENGTH = 4                                  # Cmd(1)+P1(1)+P2(1)+Chk(1)
 C2A_LENGTH = 18                                 # P1(1)+P2(1)+LED+Chk(1)
 
@@ -39,21 +38,17 @@ class A2C_Packet:
 
 @dataclass
 class ControllerState:
-    # режимы
-    mode: int = CMD_MODE_RUN  # по умолчанию RUN
-    # «нажатые» пары для RUN (не шлём наружу, но держим состояние)
+    mode: int = CMD_MODE_RUN 
     pressed_pairs: set = field(default_factory=set)
 
-    # индекс перебора для CHECK
     check_index: int = 1
 
     def set_mode(self, mode: int):
         self.mode = mode
-        # сбросить служебные состояния при смене режима
         if mode == CMD_MODE_CHECK_KEYBOARD:
             self.check_index = 1
 
-    # RUN: фиксация нажатий
+
     def press(self, p1: int, p2: int):
         self.pressed_pairs.add(self._norm_pair(p1, p2))
 
@@ -67,7 +62,7 @@ class ControllerState:
 
 class Framer:
     """
-    Побайтный парсер пакетов App->Ctrl:
+    App->Ctrl:
     SOF(0xAA) | Length | Command | Pin1 | Pin2 | Checksum
     """
     def __init__(self, on_packet, verbose=False):
@@ -99,13 +94,11 @@ class Framer:
             frame = bytes(self.buf[:expected])
             del self.buf[:expected]
 
-            # Проверка длины
             if length != A2C_LENGTH:
                 if self.verbose:
                     print(f"[WARN] Bad A2C length={length}, expected {A2C_LENGTH}", file=sys.stderr)
                 continue
 
-            # Проверка checksum (по всем байтам до checksum)
             checksum_expected = frame[-1]
             checksum_calc = calc_checksum(frame[:-1])
             if checksum_expected != checksum_calc:
@@ -134,8 +127,7 @@ class ControllerEmulator:
         self._stop = threading.Event()
         self._tx_lock = threading.Lock()
 
-        # Таймер для CHECK режима
-        self.check_interval_s = max(0.02, check_interval_s)  # защитимся от 0
+        self.check_interval_s = max(0.02, check_interval_s)  
         self._next_check_time = time.perf_counter()
 
     # --- Lifecycle ---
@@ -143,7 +135,7 @@ class ControllerEmulator:
         self.ser = serial.Serial(
             self.port_name,
             self.baud,
-            timeout=0,           # неблокирующее чтение
+            timeout=0,          
             write_timeout=1
         )
         if self.verbose:
@@ -185,19 +177,17 @@ class ControllerEmulator:
         while not self._stop.is_set():
             now = time.perf_counter()
 
-            # Отправка только в CHECK режиме
             if self.state.mode == CMD_MODE_CHECK_KEYBOARD and now >= self._next_check_time:
                 self._send_check_status()
                 self._next_check_time = now + self.check_interval_s
 
             time.sleep(0.001)
 
-    # --- Формирование Ctrl->App пакетов ---
     def _send_check_status(self):
         """
-        CHECK: перебор pin/LED. На каждом шаге:
+        CHECK: rotating:
         pin1 = i (1..15), pin2 = 0
-        leds[i-1] = 1, остальные = 0
+        leds[i-1] = 1, other = 0
         """
         if not self.ser:
             return
@@ -205,7 +195,7 @@ class ControllerEmulator:
         i = self.state.check_index
         if i < 1 or i > 15:
             i = 1
-        self.state.check_index = 1 + (i % 15)  # 1..15 по кругу
+        self.state.check_index = 1 + (i % 15)
 
         pin1, pin2 = i, i
         leds = [0]*15
@@ -226,9 +216,7 @@ class ControllerEmulator:
                 if self.verbose:
                     print(f"[ERR] TX failed: {e}", file=sys.stderr)
 
-    # --- Обработка входящих A2C ---
     def _on_a2c_packet(self, pkt: A2C_Packet):
-        # Переключение режимов
         if pkt.command == CMD_MODE_CONFIGURE:
             if self.verbose and self.state.mode != CMD_MODE_CONFIGURE:
                 print("[MODE] CONFIGURE", file=sys.stderr)
@@ -245,19 +233,15 @@ class ControllerEmulator:
             if self.verbose and self.state.mode != CMD_MODE_CHECK_KEYBOARD:
                 print("[MODE] CHECK_KEYBOARD", file=sys.stderr)
             self.state.set_mode(CMD_MODE_CHECK_KEYBOARD)
-            # Сразу сдвинем таймер, чтобы немедленно отправить первый шаг
             self._next_check_time = 0.0
             return
 
-        # Поведение по режимам
         if self.state.mode == CMD_MODE_CONFIGURE:
-            # В конфиге: ничего не шлём и считаем любые иные команды ошибкой
             if self.verbose:
                 print(f"[ERROR][CONFIGURE] Unexpected command 0x{pkt.command:02X} (ignored)", file=sys.stderr)
             return
 
         if self.state.mode == CMD_MODE_RUN:
-            # В RUN: принимаем только нажатия/отпускания; ничего не отправляем
             if pkt.command == CMD_BTN_PRESSED:
                 self._handle_press(pkt.pin1, pkt.pin2)
             elif pkt.command == CMD_BTN_RELEASED:
@@ -268,22 +252,22 @@ class ControllerEmulator:
             return
 
         if self.state.mode == CMD_MODE_CHECK_KEYBOARD:
-            # В CHECK входящие команды (кроме смены режима) игнорируем
             if self.verbose:
                 print(f"[INFO][CHECK] Ignored cmd 0x{pkt.command:02X}", file=sys.stderr)
             return
 
     def _handle_press(self, p1: int, p2: int):
-        if not (1 <= p1 <= 15 and 1 <= p2 <= 15) or p1 == p2:
+        if not (1 <= p1 <= 15 and 1 <= p2 <= 15):
             if self.verbose:
                 print(f"[WARN] Ignoring bad press ({p1},{p2})", file=sys.stderr)
             return
         self.state.press(p1, p2)
         if self.verbose:
             print(f"[PKT][RUN] press {p1}-{p2}", file=sys.stderr)
+            self._send_check_status()
 
     def _handle_release(self, p1: int, p2: int):
-        if not (1 <= p1 <= 15 and 1 <= p2 <= 15) or p1 == p2:
+        if not (1 <= p1 <= 15 and 1 <= p2 <= 15):
             if self.verbose:
                 print(f"[WARN] Ignoring bad release ({p1},{p2})", file=sys.stderr)
             return
@@ -292,7 +276,7 @@ class ControllerEmulator:
             print(f"[PKT][RUN] release {p1}-{p2}", file=sys.stderr)
 
 
-# --- Вспомогательные утилиты (локальный тест без UART) ---
+# --- Helpers ---
 def build_a2c(command: int, p1: int = 0, p2: int = 0) -> bytes:
     """
     SOF | Length(=4) | Cmd | Pin1 | Pin2 | Checksum
@@ -312,8 +296,11 @@ def main():
     args = ap.parse_args()
 
     emu = ControllerEmulator(args.port, args.baud, check_interval_s=args["check_interval"] if isinstance(args, dict) else args.check_interval, verbose=args.verbose)
-    emu.open()
-    emu.run()
+    try:
+        emu.open()
+        emu.run()
+    except Exception as e:
+        print(f"[ERROR] {e}", file=sys.stderr)
 
 
 if __name__ == "__main__":
