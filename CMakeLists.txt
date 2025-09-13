@@ -18,6 +18,8 @@ add_executable(${PROJECT_NAME} WIN32
     src/CustomScene.h
     src/DiodeItem.cpp
     src/DiodeItem.h
+    src/ImageZoomWidget.h
+    src/ImageZoomWidget.cpp
     src/KeyboardControllerProtocol.h
     src/MainWindow.cpp
     src/MainWindow.h

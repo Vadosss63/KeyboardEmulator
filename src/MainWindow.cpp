@@ -13,6 +13,7 @@
 #include <QToolButton>
 #include <QVBoxLayout>
 
+#include "ImageZoomWidget.h"
 #include "ProjectIO.h"
 
 MainWindow::MainWindow(QWidget* parent)
@@ -37,8 +38,10 @@ MainWindow::MainWindow(QWidget* parent)
 
     emit workModeChanged(WorkMode::Modify);
     createStartWidget();
+    createImageViewer();
 
     stackedWidget->addWidget(startWidget);
+    stackedWidget->addWidget(imageViewer);
     stackedWidget->addWidget(view);
     stackedWidget->setCurrentWidget(startWidget);
     setCentralWidget(stackedWidget);
@@ -60,6 +63,21 @@ void MainWindow::createStartWidget()
     connect(btnLoadProject, &QPushButton::clicked, this, &MainWindow::loadProject);
     startWidget->setFixedWidth(800);
     startWidget->setFixedHeight(600);
+}
+
+void MainWindow::createImageViewer()
+{
+    if (!imageViewer)
+    {
+        imageViewer = new ImageZoomWidget;
+        imageViewer->setZoomLimits(0.1, 10.0);
+        imageViewer->setZoomStep(1.15);
+    }
+
+    connect(imageViewer,
+            &ImageZoomWidget::zoomReady,
+            this,
+            [this]() { setBackgroundImage(imageViewer->getResultPixmap()); });
 }
 
 void MainWindow::setupScene()
@@ -191,7 +209,13 @@ void MainWindow::loadImage()
         return;
     }
 
-    setBackgroundImage(QPixmap(path));
+    if (!imageViewer)
+    {
+        return;
+    }
+
+    imageViewer->setImage(QPixmap(path));
+    stackedWidget->setCurrentWidget(imageViewer);
 }
 
 void MainWindow::enableSceneMode(bool enable)

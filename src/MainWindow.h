@@ -10,6 +10,8 @@
 #include "ComPortMenu.h"
 #include "CustomScene.h"
 
+class ImageZoomWidget;
+
 enum class WorkMode
 {
     Work = 0,
@@ -72,6 +74,8 @@ private slots:
 private:
     void createStartWidget();
 
+    void createImageViewer();
+
     void setupScene();
     void setupToolbar();
 
@@ -92,6 +96,8 @@ private:
 
     CustomScene*   scene{nullptr};
     QGraphicsView* view{nullptr};
+
+    ImageZoomWidget* imageViewer{nullptr};
 
     QList<DiodeItem*>  diodeItems{};
     QList<ButtonItem*> buttonItems{};
