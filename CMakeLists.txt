@@ -27,6 +27,8 @@ add_executable(${PROJECT_NAME} WIN32
     src/Project.h
     src/ProjectIO.cpp
     src/ProjectIO.h
+    src/RecentProjects.cpp
+    src/RecentProjects.h
     src/ResizableRectItem.cpp
     src/ResizableRectItem.h
     src/ResizeHandle.cpp

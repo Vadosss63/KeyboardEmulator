@@ -2,6 +2,7 @@
 
 #include <QGraphicsView>
 #include <QLabel>
+#include <QListWidgetItem>
 #include <QMainWindow>
 #include <QMenu>
 #include <QStackedWidget>
@@ -9,8 +10,10 @@
 
 #include "ComPortMenu.h"
 #include "CustomScene.h"
+#include "RecentProjects.h"
 
 class ImageZoomWidget;
+class QListWidget;
 
 enum class WorkMode
 {
@@ -71,8 +74,15 @@ private slots:
 
     void pasteItem(QPointF pos);
 
+    void openRecentItem(QListWidgetItem* item);
+    void clearRecentList();
+
 private:
     void createStartWidget();
+
+    void resizeRecentListToContents();
+
+    void updateRecentListWidget();
 
     void createImageViewer();
 
@@ -88,7 +98,13 @@ private:
     bool isModifyMode() const;
     bool isCheckMode() const;
 
+    bool loadProjectFromPath(const QString& path);
+
     QWidget* startWidget{nullptr};
+
+    RecentProjects m_recent{QStringLiteral("recentProjects"), 5};
+
+    QListWidget* recentList{nullptr};
 
     QStackedWidget* stackedWidget{nullptr};
 
