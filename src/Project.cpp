@@ -48,8 +48,8 @@ QByteArray Project::toManifestJson() const
         QJsonObject jl;
         jl["color"]      = l.color;
         jl["isCircular"] = l.isCircular;
-        jl["pin"]        = l.pin;
-        jl["inverted"]   = l.inverted;
+        jl["pin1"]       = l.pin1;
+        jl["pin2"]       = l.pin2;
         jl["rect"]       = rectToJson(l.rect);
         jLeds.push_back(jl);
     }
@@ -105,8 +105,8 @@ Project Project::fromManifestJson(const QByteArray& json)
         LedDef l;
         l.color      = jl.value("color").toString();
         l.isCircular = jl.value("isCircular").toBool();
-        l.pin        = jl.value("pin").toInt();
-        l.inverted   = jl.value("inverted").toBool(false);
+        l.pin1       = jl.value("pin1").toInt();
+        l.pin2       = jl.value("pin2").toInt();
         l.rect       = rectFromJson(jl.value("rect"));
         p.leds.push_back(l);
     }

@@ -27,8 +27,8 @@ struct LedDef
 
     bool isCircular = true;
 
-    int    pin      = 0;
-    bool   inverted = false;
+    int    pin1 = 0;
+    int    pin2 = 0;
     QRectF rect{0, 0, 0, 0};
 };
 

@@ -18,8 +18,8 @@ public:
 
     LedDef getDefinition() const;
 
-    void setPin(uint8_t pin);
-    void setInverted(bool inverted);
+    void setPin1(uint8_t pin);
+    void setPin2(uint8_t pin);
 
     ResizableRectItem* clone() const override;
 
@@ -38,6 +38,6 @@ private:
 
     void updateTextInfo();
 
-    uint8_t m_pin      = 0;
-    bool    m_inverted = false;
+    uint8_t m_pin1 = 0;
+    uint8_t m_pin2 = 0;
 };

@@ -9,14 +9,14 @@ DiodeItem::DiodeItem(qreal x, qreal y) : DiodeItem(LedDef{x, y}) {}
 
 DiodeItem::DiodeItem(const LedDef& def, QGraphicsItem* parent)
     : ResizableRectItem(def.rect.x(), def.rect.y(), def.rect.width(), def.rect.height(), parent)
-    , m_pin(def.pin)
-    , m_inverted(def.inverted)
+    , m_pin1(def.pin1)
+    , m_pin2(def.pin2)
 {
     setColor(QColor(def.color));
     setCircularShape(def.isCircular);
 
-    setPin(def.pin);
-    setInverted(def.inverted);
+    setPin1(def.pin1);
+    setPin2(def.pin2);
 }
 
 LedDef DiodeItem::getDefinition() const
@@ -25,22 +25,21 @@ LedDef DiodeItem::getDefinition() const
     def.rect       = rectItem();
     def.color      = color().name();
     def.isCircular = isCircular();
-    def.pin        = m_pin;
-    def.inverted   = m_inverted;
+    def.pin1       = m_pin1;
+    def.pin2       = m_pin2;
     return def;
 }
 
-void DiodeItem::setPin(uint8_t pin)
+void DiodeItem::setPin1(uint8_t pin)
 {
-    m_pin = pin;
+    m_pin1 = pin;
     updateTextInfo();
 }
 
-void DiodeItem::setInverted(bool inverted)
+void DiodeItem::setPin2(uint8_t pin)
 {
-    m_inverted = inverted;
+    m_pin2 = pin;
     updateTextInfo();
-    onStatusUpdate(m_pin, false);
 }
 
 ResizableRectItem* DiodeItem::clone() const
@@ -50,14 +49,12 @@ ResizableRectItem* DiodeItem::clone() const
 
 void DiodeItem::onStatusUpdate(uint8_t pin, bool isOn)
 {
-    if (pin != m_pin)
+    if (pin != m_pin1)
     {
         return;
     }
 
-    bool actualState = m_inverted ? !isOn : isOn;
-
-    setActive(actualState);
+    setActive(isOn);
 
     updateAppearance();
 }
@@ -69,9 +66,9 @@ void DiodeItem::extendDerivedContextMenu(QMenu& menu)
         addConfigMenu(menu);
     }
 
-    QAction* pinAct = menu.addAction(tr("Пин: %1").arg(m_pin));
+    QAction* pinAct = menu.addAction(tr("Анод: %1").arg(m_pin1));
     pinAct->setEnabled(false);
-    QAction* invAct = menu.addAction(tr("Инверсия: %1").arg(m_inverted));
+    QAction* invAct = menu.addAction(tr("Катод: %1").arg(m_pin2));
     invAct->setEnabled(false);
 }
 
@@ -82,27 +79,22 @@ void DiodeItem::setupDeleteItemAction(QAction* deleteAction)
 
 void DiodeItem::addConfigMenu(QMenu& menu)
 {
-    QMenu* pinMenu = menu.addMenu(tr("Установить пин"));
-    QMenu* invMenu = menu.addMenu(tr("Инверсия"));
+    QMenu* pin1Menu = menu.addMenu(tr("Установить Анод"));
+    QMenu* pin2Menu = menu.addMenu(tr("Установить Катод"));
 
     for (uint8_t i = 1; i <= 15; ++i)
     {
-        QAction* act = pinMenu->addAction(QString::number(i));
-        connect(act, &QAction::triggered, this, [this, i]() { setPin(i); });
+        QAction* pin1Act = pin1Menu->addAction(QString::number(i));
+        connect(pin1Act, &QAction::triggered, this, [this, i]() { setPin1(i); });
+
+        QAction* pin2Act = pin2Menu->addAction(QString::number(i));
+        connect(pin2Act, &QAction::triggered, this, [this, i]() { setPin2(i); });
     }
-
-    QAction* invOn  = invMenu->addAction(tr("None"));
-    QAction* invOff = invMenu->addAction(tr("Inverted"));
-    invOn->setData(QVariant(false));
-    invOff->setData(QVariant(true));
-    connect(invOn, &QAction::triggered, this, [this]() { setInverted(false); });
-    connect(invOff, &QAction::triggered, this, [this]() { setInverted(true); });
-
     menu.addSeparator();
 }
 
 void DiodeItem::updateTextInfo()
 {
-    const QString info = QString("P:%1\nI:%2").arg(m_pin).arg(m_inverted);
+    const QString info = QString("А:%1\nК:%2").arg(m_pin1).arg(m_pin2);
     setInfoText(info);
 }
