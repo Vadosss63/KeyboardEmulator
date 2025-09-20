@@ -5,42 +5,12 @@
 #include <QDebug>
 #include <QGraphicsSceneMouseEvent>
 
-DiodeItem::DiodeItem(qreal x, qreal y) : DiodeItem(LedDef{x, y}) {}
-
-DiodeItem::DiodeItem(const LedDef& def, QGraphicsItem* parent)
-    : ResizableRectItem(def.rect.x(), def.rect.y(), def.rect.width(), def.rect.height(), parent)
-    , m_pin1(def.p1)
-    , m_pin2(def.p2)
+DiodeItem::DiodeItem(const ItemDef& def, QGraphicsItem* parent) : AbstractItem(def, parent)
 {
-    setColor(QColor(def.color));
-    setCircularShape(def.isCircular);
-
-    setPin1(def.p1);
-    setPin2(def.p2);
-}
-
-LedDef DiodeItem::getDefinition() const
-{
-    LedDef def;
-    def.rect       = rectItem();
-    def.color      = color().name();
-    def.isCircular = isCircular();
-    def.p1         = m_pin1;
-    def.p2         = m_pin2;
-    return def;
-}
-
-void DiodeItem::setPin1(uint8_t pin)
-{
-    m_pin1 = pin;
     updateTextInfo();
 }
 
-void DiodeItem::setPin2(uint8_t pin)
-{
-    m_pin2 = pin;
-    updateTextInfo();
-}
+DiodeItem::DiodeItem(qreal x, qreal y) : DiodeItem(LedDef{x, y}, nullptr) {}
 
 ResizableRectItem* DiodeItem::clone() const
 {
@@ -49,7 +19,7 @@ ResizableRectItem* DiodeItem::clone() const
 
 void DiodeItem::onStatusUpdate(uint8_t pin, bool isOn)
 {
-    if (pin != m_pin1)
+    if (pin != getPin1())
     {
         return;
     }
@@ -66,15 +36,10 @@ void DiodeItem::extendDerivedContextMenu(QMenu& menu)
         addConfigMenu(menu);
     }
 
-    QAction* pinAct = menu.addAction(tr("Анод: %1").arg(m_pin1));
+    QAction* pinAct = menu.addAction(tr("Анод: %1").arg(getPin1()));
     pinAct->setEnabled(false);
-    QAction* invAct = menu.addAction(tr("Катод: %1").arg(m_pin2));
+    QAction* invAct = menu.addAction(tr("Катод: %1").arg(getPin2()));
     invAct->setEnabled(false);
-}
-
-void DiodeItem::setupDeleteItemAction(QAction* deleteAction)
-{
-    connect(deleteAction, &QAction::triggered, this, [this] { emit removeDiode(this); });
 }
 
 void DiodeItem::addConfigMenu(QMenu& menu)
@@ -95,6 +60,6 @@ void DiodeItem::addConfigMenu(QMenu& menu)
 
 void DiodeItem::updateTextInfo()
 {
-    const QString info = QString("А:%1\nК:%2").arg(m_pin1).arg(m_pin2);
+    const QString info = QString("А:%1\nК:%2").arg(getPin1()).arg(getPin2());
     setInfoText(info);
 }

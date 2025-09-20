@@ -1,8 +1,6 @@
 #pragma once
 
-#include <QBrush>
 #include <QMenu>
-#include <QPen>
 #include <cstdint>
 
 #include "AbstractItem.h"

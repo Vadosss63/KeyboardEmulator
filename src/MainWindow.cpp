@@ -480,7 +480,7 @@ void MainWindow::addDiodeItem(DiodeItem* diode)
     connect(this, &MainWindow::updateDiodeStatus, diode, &DiodeItem::onStatusUpdate);
     diodeItems.append(diode);
     addResizableItem(diode);
-    connect(diode, &DiodeItem::removeDiode, this, &MainWindow::deleteDiode);
+    connect(diode, &DiodeItem::removeItem, this, &MainWindow::deleteItem);
 }
 
 void MainWindow::addResizableItem(ResizableRectItem* item)

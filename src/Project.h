@@ -42,7 +42,7 @@ public:
     QByteArray manifestJson; // UTF-8
 
     QList<ItemDef> buttons;
-    QList<LedDef>  leds;
+    QList<ItemDef>  leds;
 
     QByteArray     toManifestJson() const;
     static Project fromManifestJson(const QByteArray&);
