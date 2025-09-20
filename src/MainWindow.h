@@ -67,6 +67,9 @@ private slots:
 private slots:
     void deleteButton(ButtonItem* button);
     void deleteDiode(DiodeItem* diode);
+
+    void deleteItem(AbstractItem* item);
+
     void loadImage();
 
     void enableSceneMode(bool enable);

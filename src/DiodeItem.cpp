@@ -9,14 +9,14 @@ DiodeItem::DiodeItem(qreal x, qreal y) : DiodeItem(LedDef{x, y}) {}
 
 DiodeItem::DiodeItem(const LedDef& def, QGraphicsItem* parent)
     : ResizableRectItem(def.rect.x(), def.rect.y(), def.rect.width(), def.rect.height(), parent)
-    , m_pin1(def.pin1)
-    , m_pin2(def.pin2)
+    , m_pin1(def.p1)
+    , m_pin2(def.p2)
 {
     setColor(QColor(def.color));
     setCircularShape(def.isCircular);
 
-    setPin1(def.pin1);
-    setPin2(def.pin2);
+    setPin1(def.p1);
+    setPin2(def.p2);
 }
 
 LedDef DiodeItem::getDefinition() const
@@ -25,8 +25,8 @@ LedDef DiodeItem::getDefinition() const
     def.rect       = rectItem();
     def.color      = color().name();
     def.isCircular = isCircular();
-    def.pin1       = m_pin1;
-    def.pin2       = m_pin2;
+    def.p1         = m_pin1;
+    def.p2         = m_pin2;
     return def;
 }
 

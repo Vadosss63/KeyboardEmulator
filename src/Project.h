@@ -4,32 +4,35 @@
 #include <QString>
 #include <QtCore>
 
-struct ButtonDef
+struct ItemDef
 {
-    ButtonDef() = default;
-    ButtonDef(qreal x, qreal y) : rect{x, y, 80, 80} {}
+    ItemDef() = default;
+    ItemDef(qreal x, qreal y, const QString& color, bool isCircular)
+        : rect{x, y, 80, 80}, color(color), isCircular(isCircular)
+    {
+    }
 
-    QString color = "#0000FF";
+    QString color{};
 
-    bool isCircular = false;
+    bool isCircular{false};
 
-    int    p1 = 0;
-    int    p2 = 0;
+    int    p1{0};
+    int    p2{0};
     QRectF rect{0, 0, 0, 0};
 };
 
-struct LedDef
+struct ButtonDef : public ItemDef
 {
-    LedDef() = default;
-    LedDef(qreal x, qreal y) : rect{x, y, 80, 80} {}
+    ButtonDef(qreal x, qreal y) : ItemDef(x, y, "#0000FF", false) {}
 
-    QString color = "#00FF00";
+    ButtonDef() : ButtonDef(0, 0) {}
+};
 
-    bool isCircular = true;
+struct LedDef : public ItemDef
+{
+    LedDef(qreal x, qreal y) : ItemDef(x, y, "#00FF00", true) {}
 
-    int    pin1 = 0;
-    int    pin2 = 0;
-    QRectF rect{0, 0, 0, 0};
+    LedDef() : LedDef(0, 0) {}
 };
 
 class Project
@@ -38,8 +41,8 @@ public:
     QImage     background;
     QByteArray manifestJson; // UTF-8
 
-    QList<ButtonDef> buttons;
-    QList<LedDef>    leds;
+    QList<ItemDef> buttons;
+    QList<LedDef>  leds;
 
     QByteArray     toManifestJson() const;
     static Project fromManifestJson(const QByteArray&);

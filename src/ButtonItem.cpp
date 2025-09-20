@@ -4,114 +4,16 @@
 #include <QDebug>
 #include <QGraphicsSceneContextMenuEvent>
 
-namespace
+ButtonItem::ButtonItem(const ItemDef& def, QGraphicsItem* parent) : AbstractItem(def, parent)
 {
-
-bool isLeftButtonPressed(QGraphicsSceneMouseEvent* event)
-{
-    if (!event)
-    {
-        return false;
-    }
-
-    return event->button() == Qt::LeftButton;
-}
-
-bool isCtrlButtonPressed(QGraphicsSceneMouseEvent* event)
-{
-    if (!event)
-    {
-        return false;
-    }
-
-    return event->modifiers() & Qt::ControlModifier;
-}
-
+    updateTextInfo();
 }
 
 ButtonItem::ButtonItem(qreal x, qreal y) : ButtonItem(ButtonDef{x, y}, nullptr) {}
 
-ButtonItem::ButtonItem(const ButtonDef& def, QGraphicsItem* parent)
-    : ResizableRectItem(def.rect.x(), def.rect.y(), def.rect.width(), def.rect.height(), parent)
-{
-    setColor(QColor(def.color));
-    setCircularShape(def.isCircular);
-    setPin1(def.p1);
-    setPin2(def.p2);
-}
-
-ButtonDef ButtonItem::getDefinition() const
-{
-    ButtonDef def{};
-    def.rect       = rectItem();
-    def.color      = color().name();
-    def.isCircular = isCircular();
-    def.p1         = m_pin1;
-    def.p2         = m_pin2;
-    return def;
-}
-
-void ButtonItem::setPin1(uint8_t pin)
-{
-    m_pin1 = pin;
-    updateTextInfo();
-}
-
-void ButtonItem::setPin2(uint8_t pin)
-{
-    m_pin2 = pin;
-    updateTextInfo();
-}
-
 ResizableRectItem* ButtonItem::clone() const
 {
     return new ButtonItem(getDefinition());
-}
-
-void ButtonItem::mousePressEvent(QGraphicsSceneMouseEvent* event)
-{
-    if (!m_clickable || isActive())
-    {
-        event->accept();
-        return;
-    }
-
-    if (!isLeftButtonPressed(event))
-    {
-        ResizableRectItem::mousePressEvent(event);
-        return;
-    }
-
-    setActive(true);
-    updateAppearance();
-    emit buttonPressed(m_pin1, m_pin2);
-
-    if (isCtrlButtonPressed(event))
-    {
-        ResizableRectItem::mousePressEvent(event);
-        return;
-    }
-
-    event->accept();
-}
-
-void ButtonItem::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
-{
-    ResizableRectItem::mouseReleaseEvent(event);
-
-    if (!m_clickable || !isLeftButtonPressed(event))
-    {
-        return;
-    }
-
-    if (isActive())
-    {
-        setActive(false);
-        updateAppearance();
-        emit buttonReleased(m_pin1, m_pin2);
-    }
-
-    event->accept();
 }
 
 void ButtonItem::onStatusUpdate(uint8_t pin1, uint8_t pin2, bool isPressed)
@@ -127,7 +29,7 @@ void ButtonItem::onStatusUpdate(uint8_t pin1, uint8_t pin2, bool isPressed)
         return;
     }
 
-    if (m_pin1 != pin1 || m_pin2 != pin2)
+    if (getPin1() != pin1 || getPin2() != pin2)
     {
         return;
     }
@@ -143,15 +45,10 @@ void ButtonItem::extendDerivedContextMenu(QMenu& menu)
         addPinConfigMenu(menu);
     }
 
-    QAction* pin1Act = menu.addAction(tr("Пин1: %1").arg(m_pin1));
+    QAction* pin1Act = menu.addAction(tr("Пин1: %1").arg(getPin1()));
     pin1Act->setEnabled(false);
-    QAction* pin2Act = menu.addAction(tr("Пин2: %1").arg(m_pin2));
+    QAction* pin2Act = menu.addAction(tr("Пин2: %1").arg(getPin2()));
     pin2Act->setEnabled(false);
-}
-
-void ButtonItem::setupDeleteItemAction(QAction* deleteAction)
-{
-    connect(deleteAction, &QAction::triggered, this, [this] { emit removeButton(this); });
 }
 
 void ButtonItem::addPinConfigMenu(QMenu& menu)
@@ -172,11 +69,6 @@ void ButtonItem::addPinConfigMenu(QMenu& menu)
 
 void ButtonItem::updateTextInfo()
 {
-    const QString info = QString("P1:%1\nP2:%2").arg(m_pin1).arg(m_pin2);
+    const QString info = QString("P1:%1\nP2:%2").arg(getPin1()).arg(getPin2());
     setInfoText(info);
-}
-
-void ButtonItem::setClickable(bool isClickable)
-{
-    m_clickable = isClickable;
 }

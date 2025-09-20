@@ -5,47 +5,26 @@
 #include <QPen>
 #include <cstdint>
 
-#include "Project.h"
-#include "ResizableRectItem.h"
+#include "AbstractItem.h"
 
-class ButtonItem : public ResizableRectItem
+class ButtonItem : public AbstractItem
 {
     Q_OBJECT
 public:
     ButtonItem(qreal x, qreal y);
 
-    ButtonItem(const ButtonDef& def, QGraphicsItem* parent = nullptr);
-
-    ButtonDef getDefinition() const;
-
-    void setPin1(uint8_t pin);
-    void setPin2(uint8_t pin);
+    ButtonItem(const ItemDef& def, QGraphicsItem* parent = nullptr);
 
     ResizableRectItem* clone() const override;
 
-signals:
-    void buttonPressed(uint8_t pin1, uint8_t pin2);
-    void buttonReleased(uint8_t pin1, uint8_t pin2);
-    void removeButton(ButtonItem* item);
+    void updateTextInfo() override;
 
 public slots:
     void onStatusUpdate(uint8_t pin1, uint8_t pin2, bool isPressed);
-    void setClickable(bool isClickable);
 
 protected:
-    void mousePressEvent(QGraphicsSceneMouseEvent* event) override;
-    void mouseReleaseEvent(QGraphicsSceneMouseEvent* event) override;
-
-    void setupDeleteItemAction(QAction* deleteAction) override;
     void extendDerivedContextMenu(QMenu& menu) override;
 
 private:
     void addPinConfigMenu(QMenu& menu);
-
-    void updateTextInfo();
-
-    bool m_clickable{};
-
-    uint8_t m_pin1{};
-    uint8_t m_pin2{};
 };

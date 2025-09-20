@@ -498,7 +498,27 @@ void MainWindow::addButtonItem(ButtonItem* button)
     connect(this, &MainWindow::workingModStatusChanged, button, &ButtonItem::setClickable);
     addResizableItem(button);
     buttonItems.append(button);
-    connect(button, &ButtonItem::removeButton, this, &MainWindow::deleteButton);
+    connect(button, &ButtonItem::removeItem, this, &MainWindow::deleteItem);
+}
+
+void MainWindow::deleteItem(AbstractItem* item)
+{
+    if (!item)
+    {
+        return;
+    }
+
+    if (DiodeItem* diode = dynamic_cast<DiodeItem*>(item))
+    {
+        deleteDiode(diode);
+        return;
+    }
+
+    if (ButtonItem* button = dynamic_cast<ButtonItem*>(item))
+    {
+        deleteButton(button);
+        return;
+    }
 }
 
 void MainWindow::deleteButton(ButtonItem* button)
