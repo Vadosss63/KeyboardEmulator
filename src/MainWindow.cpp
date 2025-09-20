@@ -434,37 +434,45 @@ void MainWindow::setupMenus()
 
 void MainWindow::updateStatus(uint8_t pin1, uint8_t pin2, const QVector<uint8_t>& leds)
 {
-    QString statusText      = QString("Pins: P1:%1, P2:%2, LEDs: ").arg(pin1).arg(pin2);
-    int     countActiveLeds = 0;
-    for (int i = 0; i < leds.size(); ++i)
-    {
-        if (!leds[i])
-        {
-            continue;
-        }
-
-        if (countActiveLeds > 0)
-        {
-            statusText.append(", ");
-        }
-
-        statusText.append(QString("L%1").arg(i + 1));
-        countActiveLeds++;
-    }
-    statusAction->setText(statusText);
-
-    for (int i = 0; i < leds.size(); ++i)
-    {
-        emit updateDiodeStatus(i + 1, leds[i]);
-    }
-
-    if (!isCheckMode())
+    if (currentWorkMode == WorkMode::Modify || currentWorkMode == WorkMode::DiodeConf)
     {
         return;
     }
 
-    emit updateButtonStatus(0, 0, false);
-    emit updateButtonStatus(pin1, pin2, true);
+    if (currentWorkMode == WorkMode::Work)
+    {
+        for (int i = 0; i < leds.size(); ++i)
+        {
+            emit updateDiodeStatus(i + 1, leds[i]);
+        }
+
+        return;
+    }
+
+    if (currentWorkMode == WorkMode::Check)
+    {
+        QString statusText      = QString("Pins: P1:%1, P2:%2, LEDs: ").arg(pin1).arg(pin2);
+        int     countActiveLeds = 0;
+        for (int i = 0; i < leds.size(); ++i)
+        {
+            if (!leds[i])
+            {
+                continue;
+            }
+
+            if (countActiveLeds > 0)
+            {
+                statusText.append(", ");
+            }
+
+            statusText.append(QString("L%1").arg(i + 1));
+            countActiveLeds++;
+        }
+        statusAction->setText(statusText);
+
+        emit updateButtonStatus(0, 0, false);
+        emit updateButtonStatus(pin1, pin2, true);
+    }
 }
 
 void MainWindow::addDiodeItem(DiodeItem* diode)

@@ -18,6 +18,9 @@ extern "C"
 #define CMD_MODE_CHECK_KEYBOARD 0x03
 #define CMD_MODE_RUN 0x04
 #define CMD_MODE_CONFIGURE 0x05
+#define CMD_MODE_DIODE_CONF 0x06
+#define CMD_DIODE_PRESSED 0x07
+#define CMD_DIODE_RELEASED 0x08
 
 #pragma pack(push, 1)
 
