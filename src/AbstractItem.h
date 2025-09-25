@@ -28,6 +28,7 @@ signals:
     void buttonPressed(uint8_t pin1, uint8_t pin2);
     void buttonReleased(uint8_t pin1, uint8_t pin2);
     void removeItem(AbstractItem* item);
+    void pinsChanged(AbstractItem* item);
 
 public slots:
     void setClickable(bool isClickable);

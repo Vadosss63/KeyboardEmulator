@@ -6,12 +6,9 @@
 #include <QVector>
 
 #include "KeyboardControllerProtocol.h"
-
-class MainWindow;
+#include "MainWindow.h"
 
 class SerialPortModel;
-
-enum class WorkMode;
 
 class KeyboardController : public QObject
 {
@@ -27,12 +24,19 @@ private slots:
     void handleAppButtonReleased(uint8_t pin1, uint8_t pin2);
     void handleAppDiodePressed(uint8_t pin1, uint8_t pin2);
     void handleAppDiodeReleased(uint8_t pin1, uint8_t pin2);
-    void handleAppEnterModeCheck();
-    void handleAppEnterModeRun();
-    void handleAppEnterModeConfigure();
+    void handleAppDiodePinConfigChanged(uint8_t newPin1, uint8_t newPin2);
+
     void handleWorkModeChanged(WorkMode mode);
 
 private:
+    void handleAppEnterModeCheck();
+    void handleAppEnterModeRun();
+    void handleAppEnterModeConfigure();
+
     SerialPortModel* m_model;
     MainWindow*      m_view;
+
+    WorkMode m_currentMode{WorkMode::Modify};
+
+    bool isConfUpdateInProgress{false};
 };

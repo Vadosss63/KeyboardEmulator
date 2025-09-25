@@ -305,31 +305,7 @@ void MainWindow::setupToolbar()
             {
                 modeBtn->setDefaultAction(act);
                 const auto mode = static_cast<WorkMode>(act->data().toInt());
-                /// TODO: Should be reworked
-                switch (mode)
-                {
-                    case WorkMode::Check:
-                    {
-                        emit appEnterModeCheck();
-                        break;
-                    }
-                    case WorkMode::Work:
-                    {
-                        emit appEnterModeRun();
-                        break;
-                    }
-                    case WorkMode::Modify:
-                    {
-                        emit appEnterModeConfigure();
-                        break;
-                    }
-                    default:
-                    {
-                        qDebug() << "Unrecognize mode";
-                        return;
-                    }
-                }
-                emit workModeChanged(mode);
+                emit       workModeChanged(mode);
             });
 
     loadImgAction = tb->addAction("Загрузка изображения");
@@ -483,6 +459,8 @@ void MainWindow::addDiodeItem(DiodeItem* diode)
     connect(this, &MainWindow::updateDiodeStatus, diode, &DiodeItem::onStatusUpdate);
     connect(this, &MainWindow::checkModStatusChanged, diode, &DiodeItem::onCheckModStatusChanged);
 
+    connect(diode, &DiodeItem::pinsChanged, this, &MainWindow::updatePinStatus);
+
     diodeItems.append(diode);
     addResizableItem(diode);
     connect(diode, &DiodeItem::removeItem, this, &MainWindow::deleteItem);
@@ -493,6 +471,16 @@ void MainWindow::addResizableItem(ResizableRectItem* item)
     connect(this, &MainWindow::modifyModStatusChanged, item, &ResizableRectItem::setResizable);
     connect(item, &ResizableRectItem::itemCopied, this, &MainWindow::copyItem);
     item->setResizable(isModifyMode());
+}
+
+void MainWindow::updatePinStatus(AbstractItem* item)
+{
+    if (!item)
+    {
+        return;
+    }
+
+    emit appDiodePinConfigChanged(item->getPin1(), item->getPin2());
 }
 
 void MainWindow::addButtonItem(ButtonItem* button)

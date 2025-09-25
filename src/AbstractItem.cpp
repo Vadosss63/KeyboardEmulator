@@ -51,14 +51,25 @@ ItemDef AbstractItem::getDefinition() const
 
 void AbstractItem::setPin1(uint8_t pin)
 {
+    if (m_pin1 == pin)
+    {
+        return;
+    }
     m_pin1 = pin;
     updateTextInfo();
+    emit pinsChanged(this);
 }
 
 void AbstractItem::setPin2(uint8_t pin)
 {
+    if (m_pin2 == pin)
+    {
+        return;
+    }
+
     m_pin2 = pin;
     updateTextInfo();
+    emit pinsChanged(this);
 }
 
 uint8_t AbstractItem::getPin1() const

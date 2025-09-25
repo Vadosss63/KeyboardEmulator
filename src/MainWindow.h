@@ -36,9 +36,8 @@ signals:
     void appButtonReleased(uint8_t pin1, uint8_t pin2);
     void appDiodePressed(uint8_t pin1, uint8_t pin2);
     void appDiodeReleased(uint8_t pin1, uint8_t pin2);
-    void appEnterModeCheck();
-    void appEnterModeRun();
-    void appEnterModeConfigure();
+    void appDiodePinConfigChanged(uint8_t newPin1, uint8_t newPin2);
+
     void comPortSelected(const QString& portName);
 
     void updateDiodeStatus(uint8_t pin, bool isOn);
@@ -60,6 +59,8 @@ public slots:
     void addDiodeItem(DiodeItem* diode);
     void addButtonItem(ButtonItem* button);
     void addResizableItem(ResizableRectItem* item);
+
+    void updatePinStatus(AbstractItem* item);
 
 private slots:
     void handleNewWorkMode(WorkMode mode);
