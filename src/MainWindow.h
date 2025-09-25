@@ -34,6 +34,8 @@ signals:
     // View → Controller
     void appButtonPressed(uint8_t pin1, uint8_t pin2);
     void appButtonReleased(uint8_t pin1, uint8_t pin2);
+    void appDiodePressed(uint8_t pin1, uint8_t pin2);
+    void appDiodeReleased(uint8_t pin1, uint8_t pin2);
     void appEnterModeCheck();
     void appEnterModeRun();
     void appEnterModeConfigure();
@@ -47,6 +49,7 @@ signals:
 
     void modifyModStatusChanged(bool isModifiable);
     void workingModStatusChanged(bool isActive);
+    void checkModStatusChanged(bool isActive);
 
     void projectReady(bool isReady);
 

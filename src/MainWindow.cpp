@@ -259,6 +259,7 @@ void MainWindow::handleNewWorkMode(WorkMode mode)
     currentWorkMode = mode;
     emit modifyModStatusChanged(isModifyMode());
     emit workingModStatusChanged(isWorkingMode());
+    emit checkModStatusChanged(isCheckMode());
 }
 
 void MainWindow::setupToolbar()
@@ -477,7 +478,11 @@ void MainWindow::updateStatus(uint8_t pin1, uint8_t pin2, const QVector<uint8_t>
 
 void MainWindow::addDiodeItem(DiodeItem* diode)
 {
+    connect(diode, &DiodeItem::buttonPressed, this, &MainWindow::appDiodePressed);
+    connect(diode, &DiodeItem::buttonReleased, this, &MainWindow::appDiodeReleased);
     connect(this, &MainWindow::updateDiodeStatus, diode, &DiodeItem::onStatusUpdate);
+    connect(this, &MainWindow::checkModStatusChanged, diode, &DiodeItem::setClickable);
+
     diodeItems.append(diode);
     addResizableItem(diode);
     connect(diode, &DiodeItem::removeItem, this, &MainWindow::deleteItem);

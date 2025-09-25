@@ -14,6 +14,8 @@ KeyboardController::KeyboardController(SerialPortModel* model, MainWindow* view,
     // View -> Controller
     connect(m_view, &MainWindow::appButtonPressed, this, &KeyboardController::handleAppButtonPressed);
     connect(m_view, &MainWindow::appButtonReleased, this, &KeyboardController::handleAppButtonReleased);
+    connect(m_view, &MainWindow::appDiodePressed, this, &KeyboardController::handleAppDiodePressed);
+    connect(m_view, &MainWindow::appDiodeReleased, this, &KeyboardController::handleAppDiodeReleased);
     connect(m_view, &MainWindow::appEnterModeCheck, this, &KeyboardController::handleAppEnterModeCheck);
     connect(m_view, &MainWindow::appEnterModeRun, this, &KeyboardController::handleAppEnterModeRun);
     connect(m_view, &MainWindow::appEnterModeConfigure, this, &KeyboardController::handleAppEnterModeConfigure);
@@ -36,6 +38,17 @@ void KeyboardController::handleAppButtonReleased(uint8_t pin1, uint8_t pin2)
 {
     m_model->sendCommand(CMD_BTN_RELEASED, pin1, pin2);
 }
+
+void KeyboardController::handleAppDiodePressed(uint8_t pin1, uint8_t pin2)
+{
+    m_model->sendCommand(CMD_DIODE_PRESSED, pin1, pin2);
+}
+
+void KeyboardController::handleAppDiodeReleased(uint8_t pin1, uint8_t pin2)
+{
+    m_model->sendCommand(CMD_DIODE_RELEASED, pin1, pin2);
+}
+
 void KeyboardController::handleAppEnterModeCheck()
 {
     m_model->sendCommand(CMD_MODE_CHECK_KEYBOARD);
