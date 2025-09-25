@@ -29,9 +29,15 @@ void DiodeItem::onStatusUpdate(uint8_t pin, bool isOn)
     updateAppearance();
 }
 
+void DiodeItem::onCheckModStatusChanged(bool isCheckMode)
+{
+    m_isCheckMod = isCheckMode;
+    setClickable(isCheckMode);
+}
+
 void DiodeItem::extendDerivedContextMenu(QMenu& menu)
 {
-    if (isModifyMod())
+    if (isModifyMod() || isCheckMod())
     {
         addConfigMenu(menu);
     }
@@ -56,6 +62,11 @@ void DiodeItem::addConfigMenu(QMenu& menu)
         connect(pin2Act, &QAction::triggered, this, [this, i]() { setPin2(i); });
     }
     menu.addSeparator();
+}
+
+bool DiodeItem::isCheckMod() const
+{
+    return m_isCheckMod;
 }
 
 void DiodeItem::updateTextInfo()

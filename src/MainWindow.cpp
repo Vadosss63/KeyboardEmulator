@@ -481,7 +481,7 @@ void MainWindow::addDiodeItem(DiodeItem* diode)
     connect(diode, &DiodeItem::buttonPressed, this, &MainWindow::appDiodePressed);
     connect(diode, &DiodeItem::buttonReleased, this, &MainWindow::appDiodeReleased);
     connect(this, &MainWindow::updateDiodeStatus, diode, &DiodeItem::onStatusUpdate);
-    connect(this, &MainWindow::checkModStatusChanged, diode, &DiodeItem::setClickable);
+    connect(this, &MainWindow::checkModStatusChanged, diode, &DiodeItem::onCheckModStatusChanged);
 
     diodeItems.append(diode);
     addResizableItem(diode);
