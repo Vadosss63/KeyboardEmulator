@@ -416,10 +416,9 @@ void MainWindow::updateStatus(Pins pins, const QVector<Pins>& leds)
         return;
     }
 
-    emit clearStatus();
-
     if (currentWorkMode == WorkMode::Work)
     {
+        clearDiodeStatus();
         for (const auto& led : leds)
         {
             emit updateDiodeStatus(led);
@@ -430,6 +429,7 @@ void MainWindow::updateStatus(Pins pins, const QVector<Pins>& leds)
 
     if (currentWorkMode == WorkMode::Check)
     {
+        clearButtonStatus();
         QString statusText      = QString("Pins: P1:%1, P2:%2, LEDs: ").arg(pins.pin1).arg(pins.pin2);
         int     countActiveLeds = 0;
         for (const auto& led : leds)
@@ -457,7 +457,7 @@ void MainWindow::addDiodeItem(DiodeItem* diode)
             [this](Pins pins) { emit appExecuteCommand(Command::ButtonReleased, pins); });
 
     connect(this, &MainWindow::updateDiodeStatus, diode, &DiodeItem::onStatusUpdate);
-    connect(this, &MainWindow::clearStatus, diode, &DiodeItem::clearStatus);
+    connect(this, &MainWindow::clearDiodeStatus, diode, &DiodeItem::clearStatus);
     connect(this, &MainWindow::checkModStatusChanged, diode, &DiodeItem::setClickable);
 
     connect(this,
@@ -501,7 +501,7 @@ void MainWindow::addButtonItem(ButtonItem* button)
             &ButtonItem::buttonReleased,
             [this](Pins pins) { emit appExecuteCommand(Command::ButtonReleased, pins); });
     connect(this, &MainWindow::updateButtonStatus, button, &ButtonItem::onStatusUpdate);
-    connect(this, &MainWindow::clearStatus, button, &ButtonItem::clearStatus);
+    connect(this, &MainWindow::clearButtonStatus, button, &ButtonItem::clearStatus);
     connect(this, &MainWindow::workingModStatusChanged, button, &ButtonItem::setClickable);
 
     connect(this,

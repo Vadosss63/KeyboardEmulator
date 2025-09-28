@@ -42,7 +42,8 @@ signals:
 
     void updateButtonStatus(Pins pins, bool isPressed);
 
-    void clearStatus();
+    void clearButtonStatus();
+    void clearDiodeStatus();
 
     void workModeChanged(WorkMode mode);
 
