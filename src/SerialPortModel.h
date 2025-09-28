@@ -21,11 +21,11 @@ public:
 
 public slots:
     // App -> Controller
-    void sendCommand(uint8_t command, uint8_t pin1 = 0, uint8_t pin2 = 0);
+    void sendCommand(uint8_t command, Pins pins = {0, 0});
 
 signals:
     // Ctrl -> App
-    void statusReceived(uint8_t pin1, uint8_t pin2, const QVector<uint8_t>& leds);
+    void statusReceived(Pins pins, const QVector<Pins>& leds);
 
 private slots:
     void handleReadyRead();

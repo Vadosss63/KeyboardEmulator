@@ -18,7 +18,7 @@ public:
     void updateTextInfo() override;
 
 public slots:
-    void onStatusUpdate(uint8_t pin1, uint8_t pin2, bool isPressed);
+    void onStatusUpdate(Pins pins, bool isPressed);
 
 protected:
     void extendDerivedContextMenu(QMenu& menu) override;

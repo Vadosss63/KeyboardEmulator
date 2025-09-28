@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "PinsDefinition.h"
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -23,7 +25,6 @@ extern "C"
 #define CMD_DIODE_RELEASED 0x08
 
 #pragma pack(push, 1)
-
     // Packet from Application to Controller
     // Bytes: SOF | Length | Command | Pin1 | Pin2 | Checksum
     typedef struct
@@ -31,20 +32,19 @@ extern "C"
         uint8_t sof;      // PROTOCOL_SOF
         uint8_t length;   // bytes after this field up to and including checksum
         uint8_t command;  // one of CMD_*
-        uint8_t pin1;     // pin number 1 (1..15) or 0
-        uint8_t pin2;     // pin number 2 (1..15) or 0
+        Pins    pins;     // pin numbers (1..15) or 0
         uint8_t checksum; // calc_checksum over all previous bytes
     } App2Ctrl_Packet;
 
     // Packet from Controller to Application
-    // Bytes: SOF | Length | Pin1 | Pin2 | LED[1..15] | Checksum
+    // Bytes: SOF | Length | Pin1 | Pin2 | LED pins | Checksum
     typedef struct
     {
         uint8_t sof;      // PROTOCOL_SOF
         uint8_t length;   // bytes after this field up to and including checksum
-        uint8_t pin1;     // current pin1 (in check mode) or 0
-        uint8_t pin2;     // current pin2 (in check mode) or 0
-        uint8_t leds[15]; // 0x00=off, 0x01=on for each LED
+        Pins    pins;     // pin numbers (1..15) or 0
+        uint8_t leds_num; // number of active LEDs
+        Pins    leds[0];  // LED pin numbers (1..15)
         uint8_t checksum; // calc_checksum over all previous bytes
     } Ctrl2App_Packet;
 

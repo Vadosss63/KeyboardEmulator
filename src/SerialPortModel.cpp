@@ -34,14 +34,13 @@ void SerialPortModel::closePort()
     }
 }
 
-void SerialPortModel::sendCommand(uint8_t command, uint8_t pin1, uint8_t pin2)
+void SerialPortModel::sendCommand(uint8_t command, Pins pins)
 {
     App2Ctrl_Packet pkt;
     pkt.sof     = PROTOCOL_SOF;
     pkt.length  = sizeof(pkt) - offsetof(App2Ctrl_Packet, command); // command+pin1+pin2+checksum
     pkt.command = command;
-    pkt.pin1    = pin1;
-    pkt.pin2    = pin2;
+    pkt.pins    = pins;
     // SOF + Length + Command + Pin1 + Pin2
     const size_t len_before_checksum = offsetof(App2Ctrl_Packet, checksum);
 
@@ -87,11 +86,11 @@ void SerialPortModel::parsePacket(QByteArray& frame)
 {
     const Ctrl2App_Packet* rp = reinterpret_cast<const Ctrl2App_Packet*>(frame.constData());
 
-    QVector<uint8_t> leds;
-    leds.reserve(15);
-    for (int i = 0; i < 15; ++i)
+    QVector<Pins> leds;
+    leds.reserve(rp->leds_num);
+    for (int i = 0; i < rp->leds_num; ++i)
     {
         leds.append(rp->leds[i]);
     }
-    emit statusReceived(rp->pin1, rp->pin2, leds);
+    emit statusReceived(rp->pins, leds);
 }

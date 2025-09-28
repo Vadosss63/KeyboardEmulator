@@ -10,6 +10,8 @@ find_package(Qt6 REQUIRED COMPONENTS Core Widgets Gui SerialPort)
 
 add_executable(${PROJECT_NAME} WIN32
     resources.qrc
+    src/protocol/PinsDefinition.h
+    src/protocol/KeyboardControllerProtocol.h
     src/AbstractItem.cpp
     src/AbstractItem.h
     src/ButtonItem.cpp
@@ -22,7 +24,6 @@ add_executable(${PROJECT_NAME} WIN32
     src/DiodeItem.h
     src/ImageZoomWidget.h
     src/ImageZoomWidget.cpp
-    src/KeyboardControllerProtocol.h
     src/MainWindow.cpp
     src/MainWindow.h
     src/Project.cpp
@@ -41,6 +42,12 @@ add_executable(${PROJECT_NAME} WIN32
     src/KeyboardController.h
     src/main.cpp
 )
+
+target_include_directories(${PROJECT_NAME}
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/protocol
+)
+
 
 target_compile_definitions(${PROJECT_NAME}
     PRIVATE APP_VERSION=\"${PROJECT_VERSION}\"

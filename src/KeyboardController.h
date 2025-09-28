@@ -17,14 +17,14 @@ public:
     KeyboardController(SerialPortModel* model, MainWindow* view, QObject* parent = nullptr);
 
 private slots:
-    void onStatusReceived(uint8_t pin1, uint8_t pin2, const QVector<uint8_t>& leds);
+    void onStatusReceived(Pins pins, const QVector<Pins>& leds);
 
     // signals from View
-    void handleAppButtonPressed(uint8_t pin1, uint8_t pin2);
-    void handleAppButtonReleased(uint8_t pin1, uint8_t pin2);
-    void handleAppDiodePressed(uint8_t pin1, uint8_t pin2);
-    void handleAppDiodeReleased(uint8_t pin1, uint8_t pin2);
-    void handleAppDiodePinConfigChanged(uint8_t newPin1, uint8_t newPin2);
+    void handleAppButtonPressed(Pins pins);
+    void handleAppButtonReleased(Pins pins);
+    void handleAppDiodePressed(Pins pins);
+    void handleAppDiodeReleased(Pins pins);
+    void handleAppDiodePinConfigChanged(Pins newPins);
 
     void handleWorkModeChanged(WorkMode mode);
 

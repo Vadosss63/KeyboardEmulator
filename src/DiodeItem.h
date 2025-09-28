@@ -4,6 +4,7 @@
 #include <cstdint>
 
 #include "AbstractItem.h"
+#include "PinsDefinition.h"
 
 class DiodeItem : public AbstractItem
 {
@@ -17,7 +18,7 @@ public:
     void updateTextInfo() override;
 
 public slots:
-    void onStatusUpdate(uint8_t pin, bool isOn);
+    void onStatusUpdate(Pins pins);
     void onCheckModStatusChanged(bool isCheckMode);
 
 protected:

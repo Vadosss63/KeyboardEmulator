@@ -97,7 +97,7 @@ void AbstractItem::mousePressEvent(QGraphicsSceneMouseEvent* event)
 
     setActive(true);
     updateAppearance();
-    emit buttonPressed(m_pin1, m_pin2);
+    emit buttonPressed({m_pin1, m_pin2});
 
     if (isCtrlButtonPressed(event))
     {
@@ -121,7 +121,7 @@ void AbstractItem::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
     {
         setActive(false);
         updateAppearance();
-        emit buttonReleased(m_pin1, m_pin2);
+        emit buttonReleased({m_pin1, m_pin2});
     }
 
     event->accept();

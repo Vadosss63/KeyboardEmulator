@@ -5,6 +5,7 @@
 #include <QPen>
 #include <cstdint>
 
+#include "PinsDefinition.h"
 #include "Project.h"
 #include "ResizableRectItem.h"
 
@@ -25,8 +26,8 @@ public:
     virtual void updateTextInfo() = 0;
 
 signals:
-    void buttonPressed(uint8_t pin1, uint8_t pin2);
-    void buttonReleased(uint8_t pin1, uint8_t pin2);
+    void buttonPressed(Pins pins);
+    void buttonReleased(Pins pins);
     void removeItem(AbstractItem* item);
     void pinsChanged(AbstractItem* item);
 

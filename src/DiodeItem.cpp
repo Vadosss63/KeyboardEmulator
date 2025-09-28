@@ -17,14 +17,21 @@ ResizableRectItem* DiodeItem::clone() const
     return new DiodeItem(getDefinition());
 }
 
-void DiodeItem::onStatusUpdate(uint8_t pin, bool isOn)
+void DiodeItem::onStatusUpdate(Pins pins)
 {
-    if (pin != getPin1())
+    if (pins.pin1 == 0 || pins.pin2 == 0)
+    {
+        setActive(false);
+        updateAppearance();
+        return;
+    }
+
+    if (pins.pin1 != getPin1() || pins.pin2 != getPin2())
     {
         return;
     }
 
-    setActive(isOn);
+    setActive(true);
 
     updateAppearance();
 }

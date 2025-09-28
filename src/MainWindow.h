@@ -10,6 +10,7 @@
 
 #include "ComPortMenu.h"
 #include "CustomScene.h"
+#include "PinsDefinition.h"
 #include "RecentProjects.h"
 
 class ImageZoomWidget;
@@ -32,17 +33,17 @@ public:
 
 signals:
     // View → Controller
-    void appButtonPressed(uint8_t pin1, uint8_t pin2);
-    void appButtonReleased(uint8_t pin1, uint8_t pin2);
-    void appDiodePressed(uint8_t pin1, uint8_t pin2);
-    void appDiodeReleased(uint8_t pin1, uint8_t pin2);
-    void appDiodePinConfigChanged(uint8_t newPin1, uint8_t newPin2);
+    void appButtonPressed(Pins pins);
+    void appButtonReleased(Pins pins);
+    void appDiodePressed(Pins pins);
+    void appDiodeReleased(Pins pins);
+    void appDiodePinConfigChanged(Pins newPins);
 
     void comPortSelected(const QString& portName);
 
-    void updateDiodeStatus(uint8_t pin, bool isOn);
+    void updateDiodeStatus(Pins pins);
 
-    void updateButtonStatus(uint8_t pin1, uint8_t pin2, bool isPressed);
+    void updateButtonStatus(Pins pins, bool isPressed);
 
     void workModeChanged(WorkMode mode);
 
@@ -54,7 +55,7 @@ signals:
 
 public slots:
     // Controller → View
-    void updateStatus(uint8_t pin1, uint8_t pin2, const QVector<uint8_t>& leds);
+    void updateStatus(Pins pins, const QVector<Pins>& leds);
 
     void addDiodeItem(DiodeItem* diode);
     void addButtonItem(ButtonItem* button);

@@ -409,7 +409,7 @@ void MainWindow::setupMenus()
     versionMenu->addAction(QStringLiteral(APP_VERSION));
 }
 
-void MainWindow::updateStatus(uint8_t pin1, uint8_t pin2, const QVector<uint8_t>& leds)
+void MainWindow::updateStatus(Pins pins, const QVector<Pins>& leds)
 {
     if (currentWorkMode == WorkMode::Modify || currentWorkMode == WorkMode::DiodeConf)
     {
@@ -418,9 +418,9 @@ void MainWindow::updateStatus(uint8_t pin1, uint8_t pin2, const QVector<uint8_t>
 
     if (currentWorkMode == WorkMode::Work)
     {
-        for (int i = 0; i < leds.size(); ++i)
+        for (const auto& led : leds)
         {
-            emit updateDiodeStatus(i + 1, leds[i]);
+            emit updateDiodeStatus(led);
         }
 
         return;
@@ -428,27 +428,22 @@ void MainWindow::updateStatus(uint8_t pin1, uint8_t pin2, const QVector<uint8_t>
 
     if (currentWorkMode == WorkMode::Check)
     {
-        QString statusText      = QString("Pins: P1:%1, P2:%2, LEDs: ").arg(pin1).arg(pin2);
+        QString statusText      = QString("Pins: P1:%1, P2:%2, LEDs: ").arg(pins.pin1).arg(pins.pin2);
         int     countActiveLeds = 0;
-        for (int i = 0; i < leds.size(); ++i)
+        for (const auto& led : leds)
         {
-            if (!leds[i])
-            {
-                continue;
-            }
-
             if (countActiveLeds > 0)
             {
                 statusText.append(", ");
             }
 
-            statusText.append(QString("L%1").arg(i + 1));
+            statusText.append(QString("A%1:K%2").arg(led.pin1).arg(led.pin2));
             countActiveLeds++;
         }
         statusAction->setText(statusText);
 
-        emit updateButtonStatus(0, 0, false);
-        emit updateButtonStatus(pin1, pin2, true);
+        emit updateButtonStatus({0, 0}, false);
+        emit updateButtonStatus(pins, true);
     }
 }
 
@@ -480,7 +475,7 @@ void MainWindow::updatePinStatus(AbstractItem* item)
         return;
     }
 
-    emit appDiodePinConfigChanged(item->getPin1(), item->getPin2());
+    emit appDiodePinConfigChanged({item->getPin1(), item->getPin2()});
 }
 
 void MainWindow::addButtonItem(ButtonItem* button)

@@ -21,7 +21,7 @@ KeyboardController::KeyboardController(SerialPortModel* model, MainWindow* view,
     connect(m_view, &MainWindow::workModeChanged, this, &KeyboardController::handleWorkModeChanged);
 }
 
-void KeyboardController::onStatusReceived(uint8_t pin1, uint8_t pin2, const QVector<uint8_t>& leds)
+void KeyboardController::onStatusReceived(Pins pins, const QVector<Pins>& leds)
 {
     if (isConfUpdateInProgress)
     {
@@ -30,32 +30,32 @@ void KeyboardController::onStatusReceived(uint8_t pin1, uint8_t pin2, const QVec
         return;
     }
 
-    m_view->updateStatus(pin1, pin2, leds);
+    m_view->updateStatus(pins, leds);
 }
 
 // Handlers View -> send to Model
-void KeyboardController::handleAppButtonPressed(uint8_t pin1, uint8_t pin2)
+void KeyboardController::handleAppButtonPressed(Pins pins)
 {
-    m_model->sendCommand(CMD_BTN_PRESSED, pin1, pin2);
+    m_model->sendCommand(CMD_BTN_PRESSED, pins);
 }
-void KeyboardController::handleAppButtonReleased(uint8_t pin1, uint8_t pin2)
+void KeyboardController::handleAppButtonReleased(Pins pins)
 {
-    m_model->sendCommand(CMD_BTN_RELEASED, pin1, pin2);
-}
-
-void KeyboardController::handleAppDiodePressed(uint8_t pin1, uint8_t pin2)
-{
-    m_model->sendCommand(CMD_DIODE_PRESSED, pin1, pin2);
+    m_model->sendCommand(CMD_BTN_RELEASED, pins);
 }
 
-void KeyboardController::handleAppDiodeReleased(uint8_t pin1, uint8_t pin2)
+void KeyboardController::handleAppDiodePressed(Pins pins)
 {
-    m_model->sendCommand(CMD_DIODE_RELEASED, pin1, pin2);
+    m_model->sendCommand(CMD_DIODE_PRESSED, pins);
 }
 
-void KeyboardController::handleAppDiodePinConfigChanged(uint8_t newPin1, uint8_t newPin2)
+void KeyboardController::handleAppDiodeReleased(Pins pins)
 {
-    m_model->sendCommand(CMD_MODE_DIODE_CONF, newPin1, newPin2);
+    m_model->sendCommand(CMD_DIODE_RELEASED, pins);
+}
+
+void KeyboardController::handleAppDiodePinConfigChanged(Pins newPins)
+{
+    m_model->sendCommand(CMD_MODE_DIODE_CONF, newPins);
     bool isConfUpdateInProgress = true;
 }
 

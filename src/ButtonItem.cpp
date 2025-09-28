@@ -16,9 +16,9 @@ ResizableRectItem* ButtonItem::clone() const
     return new ButtonItem(getDefinition());
 }
 
-void ButtonItem::onStatusUpdate(uint8_t pin1, uint8_t pin2, bool isPressed)
+void ButtonItem::onStatusUpdate(Pins pins, bool isPressed)
 {
-    if (pin1 == 0 && pin2 == 0)
+    if (pins.pin1 == 0 && pins.pin2 == 0)
     {
         // Reset all buttons
         if (isActive())
@@ -29,7 +29,7 @@ void ButtonItem::onStatusUpdate(uint8_t pin1, uint8_t pin2, bool isPressed)
         return;
     }
 
-    if (getPin1() != pin1 || getPin2() != pin2)
+    if (getPin1() != pins.pin1 || getPin2() != pins.pin2)
     {
         return;
     }
