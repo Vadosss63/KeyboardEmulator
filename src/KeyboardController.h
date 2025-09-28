@@ -19,20 +19,11 @@ public:
 private slots:
     void onStatusReceived(Pins pins, const QVector<Pins>& leds);
 
-    // signals from View
-    void handleAppButtonPressed(Pins pins);
-    void handleAppButtonReleased(Pins pins);
-    void handleAppDiodePressed(Pins pins);
-    void handleAppDiodeReleased(Pins pins);
-    void handleAppDiodePinConfigChanged(Pins newPins);
+    void handleAppCommands(Command command, Pins pins);
 
     void handleWorkModeChanged(WorkMode mode);
 
 private:
-    void handleAppEnterModeCheck();
-    void handleAppEnterModeRun();
-    void handleAppEnterModeConfigure();
-
     SerialPortModel* m_model;
     MainWindow*      m_view;
 

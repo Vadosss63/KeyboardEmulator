@@ -34,7 +34,7 @@ void SerialPortModel::closePort()
     }
 }
 
-void SerialPortModel::sendCommand(uint8_t command, Pins pins)
+void SerialPortModel::sendCommand(Command command, Pins pins)
 {
     App2Ctrl_Packet pkt;
     pkt.sof     = PROTOCOL_SOF;

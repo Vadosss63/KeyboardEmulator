@@ -17,17 +17,9 @@ public:
 
     void updateTextInfo() override;
 
-public slots:
-    void onStatusUpdate(Pins pins);
-    void onCheckModStatusChanged(bool isCheckMode);
-
 protected:
     void extendDerivedContextMenu(QMenu& menu) override;
 
 private:
     void addConfigMenu(QMenu& menu);
-
-    bool isCheckMod() const;
-
-    bool m_isCheckMod{false};
 };

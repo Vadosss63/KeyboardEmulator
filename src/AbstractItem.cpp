@@ -81,6 +81,34 @@ uint8_t AbstractItem::getPin2() const
 {
     return m_pin2;
 }
+
+void AbstractItem::setShowExtendedMenu(bool isShow)
+{
+    isShowMenu = isShow;
+}
+
+void AbstractItem::clearStatus()
+{
+    setActive(false);
+    updateAppearance();
+}
+
+void AbstractItem::onStatusUpdate(Pins pins)
+{
+    if (getPin1() != pins.pin1 || getPin2() != pins.pin2)
+    {
+        return;
+    }
+
+    setActive(true);
+    updateAppearance();
+}
+
+bool AbstractItem::isShowExtendedMenu() const
+{
+    return isShowMenu;
+}
+
 void AbstractItem::mousePressEvent(QGraphicsSceneMouseEvent* event)
 {
     if (!m_clickable || isActive())

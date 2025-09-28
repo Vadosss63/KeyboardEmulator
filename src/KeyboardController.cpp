@@ -11,11 +11,7 @@ KeyboardController::KeyboardController(SerialPortModel* model, MainWindow* view,
     connect(m_model, &SerialPortModel::statusReceived, this, &KeyboardController::onStatusReceived);
 
     // View -> Controller
-    connect(m_view, &MainWindow::appButtonPressed, this, &KeyboardController::handleAppButtonPressed);
-    connect(m_view, &MainWindow::appButtonReleased, this, &KeyboardController::handleAppButtonReleased);
-    connect(m_view, &MainWindow::appDiodePressed, this, &KeyboardController::handleAppDiodePressed);
-    connect(m_view, &MainWindow::appDiodeReleased, this, &KeyboardController::handleAppDiodeReleased);
-    connect(m_view, &MainWindow::appDiodePinConfigChanged, this, &KeyboardController::handleAppDiodePinConfigChanged);
+    connect(m_view, &MainWindow::appExecuteCommand, this, &KeyboardController::handleAppCommands);
 
     connect(m_view, &MainWindow::comPortSelected, [this](const QString& portName) { m_model->openPort(portName); });
     connect(m_view, &MainWindow::workModeChanged, this, &KeyboardController::handleWorkModeChanged);
@@ -33,44 +29,10 @@ void KeyboardController::onStatusReceived(Pins pins, const QVector<Pins>& leds)
     m_view->updateStatus(pins, leds);
 }
 
-// Handlers View -> send to Model
-void KeyboardController::handleAppButtonPressed(Pins pins)
+void KeyboardController::handleAppCommands(Command command, Pins pins)
 {
-    m_model->sendCommand(CMD_BTN_PRESSED, pins);
-}
-void KeyboardController::handleAppButtonReleased(Pins pins)
-{
-    m_model->sendCommand(CMD_BTN_RELEASED, pins);
-}
-
-void KeyboardController::handleAppDiodePressed(Pins pins)
-{
-    m_model->sendCommand(CMD_DIODE_PRESSED, pins);
-}
-
-void KeyboardController::handleAppDiodeReleased(Pins pins)
-{
-    m_model->sendCommand(CMD_DIODE_RELEASED, pins);
-}
-
-void KeyboardController::handleAppDiodePinConfigChanged(Pins newPins)
-{
-    m_model->sendCommand(CMD_MODE_DIODE_CONF, newPins);
-    bool isConfUpdateInProgress = true;
-}
-
-void KeyboardController::handleAppEnterModeCheck()
-{
-    m_model->sendCommand(CMD_MODE_CHECK_KEYBOARD);
-}
-void KeyboardController::handleAppEnterModeRun()
-{
-    m_model->sendCommand(CMD_MODE_RUN);
-}
-
-void KeyboardController::handleAppEnterModeConfigure()
-{
-    m_model->sendCommand(CMD_MODE_CONFIGURE);
+    isConfUpdateInProgress = (command == Command::ModeDiodeConfig || command == Command::ModeDiodeConfigDel);
+    m_model->sendCommand(command, pins);
 }
 
 void KeyboardController::handleWorkModeChanged(WorkMode mode)
@@ -80,13 +42,13 @@ void KeyboardController::handleWorkModeChanged(WorkMode mode)
     switch (mode)
     {
         case WorkMode::Work:
-            handleAppEnterModeRun();
+            m_model->sendCommand(Command::ModeRun);
             break;
         case WorkMode::Check:
-            handleAppEnterModeCheck();
+            m_model->sendCommand(Command::ModeCheckKeyboard);
             break;
         case WorkMode::Modify:
-            handleAppEnterModeConfigure();
+            m_model->sendCommand(Command::ModeConfigure);
             break;
         default:
             break;

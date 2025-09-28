@@ -10,6 +10,7 @@ find_package(Qt6 REQUIRED COMPONENTS Core Widgets Gui SerialPort)
 
 add_executable(${PROJECT_NAME} WIN32
     resources.qrc
+    src/protocol/CommandDefinition.h
     src/protocol/PinsDefinition.h
     src/protocol/KeyboardControllerProtocol.h
     src/AbstractItem.cpp

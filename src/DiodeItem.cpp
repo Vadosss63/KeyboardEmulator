@@ -17,34 +17,9 @@ ResizableRectItem* DiodeItem::clone() const
     return new DiodeItem(getDefinition());
 }
 
-void DiodeItem::onStatusUpdate(Pins pins)
-{
-    if (pins.pin1 == 0 || pins.pin2 == 0)
-    {
-        setActive(false);
-        updateAppearance();
-        return;
-    }
-
-    if (pins.pin1 != getPin1() || pins.pin2 != getPin2())
-    {
-        return;
-    }
-
-    setActive(true);
-
-    updateAppearance();
-}
-
-void DiodeItem::onCheckModStatusChanged(bool isCheckMode)
-{
-    m_isCheckMod = isCheckMode;
-    setClickable(isCheckMode);
-}
-
 void DiodeItem::extendDerivedContextMenu(QMenu& menu)
 {
-    if (isModifyMod() || isCheckMod())
+    if (isShowExtendedMenu())
     {
         addConfigMenu(menu);
     }
@@ -69,11 +44,6 @@ void DiodeItem::addConfigMenu(QMenu& menu)
         connect(pin2Act, &QAction::triggered, this, [this, i]() { setPin2(i); });
     }
     menu.addSeparator();
-}
-
-bool DiodeItem::isCheckMod() const
-{
-    return m_isCheckMod;
 }
 
 void DiodeItem::updateTextInfo()

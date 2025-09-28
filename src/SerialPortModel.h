@@ -21,7 +21,7 @@ public:
 
 public slots:
     // App -> Controller
-    void sendCommand(uint8_t command, Pins pins = {0, 0});
+    void sendCommand(Command command, Pins pins = {0, 0});
 
 signals:
     // Ctrl -> App

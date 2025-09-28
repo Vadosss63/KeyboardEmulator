@@ -1,7 +1,6 @@
 #include "ButtonItem.h"
 
 #include <QAction>
-#include <QDebug>
 #include <QGraphicsSceneContextMenuEvent>
 
 ButtonItem::ButtonItem(const ItemDef& def, QGraphicsItem* parent) : AbstractItem(def, parent)
@@ -16,31 +15,9 @@ ResizableRectItem* ButtonItem::clone() const
     return new ButtonItem(getDefinition());
 }
 
-void ButtonItem::onStatusUpdate(Pins pins, bool isPressed)
-{
-    if (pins.pin1 == 0 && pins.pin2 == 0)
-    {
-        // Reset all buttons
-        if (isActive())
-        {
-            setActive(false);
-            updateAppearance();
-        }
-        return;
-    }
-
-    if (getPin1() != pins.pin1 || getPin2() != pins.pin2)
-    {
-        return;
-    }
-
-    setActive(isPressed);
-    updateAppearance();
-}
-
 void ButtonItem::extendDerivedContextMenu(QMenu& menu)
 {
-    if (isModifyMod())
+    if (isShowExtendedMenu())
     {
         addPinConfigMenu(menu);
     }

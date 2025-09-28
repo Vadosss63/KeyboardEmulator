@@ -416,6 +416,8 @@ void MainWindow::updateStatus(Pins pins, const QVector<Pins>& leds)
         return;
     }
 
+    emit clearStatus();
+
     if (currentWorkMode == WorkMode::Work)
     {
         for (const auto& led : leds)
@@ -442,17 +444,29 @@ void MainWindow::updateStatus(Pins pins, const QVector<Pins>& leds)
         }
         statusAction->setText(statusText);
 
-        emit updateButtonStatus({0, 0}, false);
         emit updateButtonStatus(pins, true);
     }
 }
 
 void MainWindow::addDiodeItem(DiodeItem* diode)
 {
-    connect(diode, &DiodeItem::buttonPressed, this, &MainWindow::appDiodePressed);
-    connect(diode, &DiodeItem::buttonReleased, this, &MainWindow::appDiodeReleased);
+    connect(
+        diode, &DiodeItem::buttonPressed, [this](Pins pins) { emit appExecuteCommand(Command::ButtonPressed, pins); });
+    connect(diode,
+            &DiodeItem::buttonReleased,
+            [this](Pins pins) { emit appExecuteCommand(Command::ButtonReleased, pins); });
+
     connect(this, &MainWindow::updateDiodeStatus, diode, &DiodeItem::onStatusUpdate);
-    connect(this, &MainWindow::checkModStatusChanged, diode, &DiodeItem::onCheckModStatusChanged);
+    connect(this, &MainWindow::clearStatus, diode, &DiodeItem::clearStatus);
+    connect(this, &MainWindow::checkModStatusChanged, diode, &DiodeItem::setClickable);
+
+    connect(this,
+            &MainWindow::workModeChanged,
+            [diode](WorkMode mode)
+            {
+                const bool show = mode == WorkMode::Modify || mode == WorkMode::Check;
+                diode->setShowExtendedMenu(show);
+            });
 
     connect(diode, &DiodeItem::pinsChanged, this, &MainWindow::updatePinStatus);
 
@@ -475,15 +489,29 @@ void MainWindow::updatePinStatus(AbstractItem* item)
         return;
     }
 
-    emit appDiodePinConfigChanged({item->getPin1(), item->getPin2()});
+    emit appExecuteCommand(Command::ModeDiodeConfig, {item->getPin1(), item->getPin2()});
 }
 
 void MainWindow::addButtonItem(ButtonItem* button)
 {
-    connect(button, &ButtonItem::buttonPressed, this, &MainWindow::appButtonPressed);
-    connect(button, &ButtonItem::buttonReleased, this, &MainWindow::appButtonReleased);
+    connect(button,
+            &ButtonItem::buttonPressed,
+            [this](Pins pins) { emit appExecuteCommand(Command::ButtonPressed, pins); });
+    connect(button,
+            &ButtonItem::buttonReleased,
+            [this](Pins pins) { emit appExecuteCommand(Command::ButtonReleased, pins); });
     connect(this, &MainWindow::updateButtonStatus, button, &ButtonItem::onStatusUpdate);
+    connect(this, &MainWindow::clearStatus, button, &ButtonItem::clearStatus);
     connect(this, &MainWindow::workingModStatusChanged, button, &ButtonItem::setClickable);
+
+    connect(this,
+            &MainWindow::workModeChanged,
+            [button](WorkMode mode)
+            {
+                const bool show = mode == WorkMode::Modify || mode == WorkMode::Check;
+                button->setShowExtendedMenu(show);
+            });
+
     addResizableItem(button);
     buttonItems.append(button);
     connect(button, &ButtonItem::removeItem, this, &MainWindow::deleteItem);
@@ -527,6 +555,8 @@ void MainWindow::deleteDiode(DiodeItem* diode)
     {
         return;
     }
+
+    appExecuteCommand(Command::ModeDiodeConfigDel, {diode->getPin1(), diode->getPin2()});
 
     scene->removeItem(diode);
     diodeItems.removeOne(diode);

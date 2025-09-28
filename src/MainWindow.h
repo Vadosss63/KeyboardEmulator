@@ -9,6 +9,7 @@
 #include <cstdint>
 
 #include "ComPortMenu.h"
+#include "CommandDefinition.h"
 #include "CustomScene.h"
 #include "PinsDefinition.h"
 #include "RecentProjects.h"
@@ -33,17 +34,15 @@ public:
 
 signals:
     // View → Controller
-    void appButtonPressed(Pins pins);
-    void appButtonReleased(Pins pins);
-    void appDiodePressed(Pins pins);
-    void appDiodeReleased(Pins pins);
-    void appDiodePinConfigChanged(Pins newPins);
+    void appExecuteCommand(Command command, Pins pins = {0, 0});
 
     void comPortSelected(const QString& portName);
 
     void updateDiodeStatus(Pins pins);
 
     void updateButtonStatus(Pins pins, bool isPressed);
+
+    void clearStatus();
 
     void workModeChanged(WorkMode mode);
 

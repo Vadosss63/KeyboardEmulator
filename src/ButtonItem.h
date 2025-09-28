@@ -17,9 +17,6 @@ public:
 
     void updateTextInfo() override;
 
-public slots:
-    void onStatusUpdate(Pins pins, bool isPressed);
-
 protected:
     void extendDerivedContextMenu(QMenu& menu) override;
 

@@ -23,6 +23,9 @@ public:
     uint8_t getPin1() const;
     uint8_t getPin2() const;
 
+    bool isShowExtendedMenu() const;
+    void setShowExtendedMenu(bool isShow);
+
     virtual void updateTextInfo() = 0;
 
 signals:
@@ -33,6 +36,9 @@ signals:
 
 public slots:
     void setClickable(bool isClickable);
+    void clearStatus();
+
+    void onStatusUpdate(Pins pins);
 
 protected:
     void mousePressEvent(QGraphicsSceneMouseEvent* event) override;
@@ -41,7 +47,9 @@ protected:
     void setupDeleteItemAction(QAction* deleteAction) override;
 
 private:
-    bool m_clickable{};
+    bool isShowMenu{true};
+
+    bool m_clickable{false};
 
     uint8_t m_pin1{};
     uint8_t m_pin2{};
