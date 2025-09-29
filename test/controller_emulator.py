@@ -15,14 +15,18 @@ except ImportError:
 # --- Протокол ---
 PROTOCOL_SOF = 0xAA
 
-# Команды App -> Ctrl
-CMD_BTN_PRESSED           = 0x01
-CMD_BTN_RELEASED          = 0x02
-CMD_MODE_CHECK_KEYBOARD   = 0x03
-CMD_MODE_RUN              = 0x04
-CMD_MODE_CONFIGURE        = 0x05
-CMD_MODE_DIODE_CONFIG     = 0x06
-CMD_MODE_DIODE_CONFIG_DEL = 0x07
+# Команды App -> Ctrl (обновлено)
+CMD_ECHO                  = 0x01
+CMD_BTN_PRESSED           = 0x02
+CMD_BTN_RELEASED          = 0x03
+CMD_MODE_CHECK_KEYBOARD   = 0x04
+CMD_MODE_RUN              = 0x05
+CMD_MODE_CONFIGURE        = 0x06
+CMD_MODE_DIODE_CONFIG     = 0x07
+CMD_MODE_DIODE_CONFIG_DEL = 0x08
+CMD_MODE_DIODE_CLEAR      = 0x09
+CMD_DIODE_PRESSED         = 0x0A
+CMD_DIODE_RELEASED        = 0x0B
 
 # App->Ctrl кадр: SOF | Length(=4) | Cmd | Pin1 | Pin2 | Checksum
 A2C_LENGTH = 4
@@ -108,20 +112,23 @@ class Framer:
 
 class ControllerEmulator:
     """
-    RUN (0x04):
-      - BTN_PRESSED(p1,p2) -> немедленно Ctrl->App: pin1=p1, pin2=p2, leds_num=1, leds=(p1,p2)
-      - BTN_RELEASED -> только лог.
+    RUN (0x05):
+      - BTN_PRESSED(0x02,p1,p2) -> немедленно Ctrl->App: pin1=p1, pin2=p2, leds_num=1, leds=(p1,p2)
+      - BTN_RELEASED(0x03) -> только лог.
 
-    CHECK (0x03):
-      - Самогенерация событий по кругу: i=1..15, каждые --check-interval секунд шлём пакет
-        pin1=i, pin2=i, leds_num=0 (LED в этом режиме игнорируются).
-      - BTN_PRESSED от приложения = "нажатие на диод" -> отвечаем пакетом с leds_num=1, leds=(p1,p2).
-      - BTN_RELEASED от приложения -> только лог.
+    CHECK (0x04):
+      - Самогенерация по кругу i=1..15 каждые --check-interval секунд:
+        pin1=i, pin2=i, leds_num=0.
+      - BTN_PRESSED(0x02) из приложения = "нажатие на диод" -> отвечаем пакетом с leds_num=1, leds=(p1,p2).
+      - BTN_RELEASED(0x03) -> только лог.
+      - DIODE_PRESSED/RELEASED (0x0A/0x0B) -> только печатаем пины (без ответа).
 
-    DIODE_CONFIG (0x06) и DIODE_CONFIG_DEL (0x07):
-      - При получении команды — немедленно отправляем нулевой ACK:
-        pin1=0, pin2=0, leds_num=0 (массив пуст).
-      - Никаких периодических отправок; прочие команды — игнор (только лог).
+    DIODE_CONFIG (0x07), DIODE_CONFIG_DEL (0x08), DIODE_CLEAR (0x09):
+      - 0x07 и 0x08: вход в режим и немедленный нулевой ACK (pin1=0, pin2=0, leds_num=0).
+      - 0x09: лог "принято" и немедленный нулевой ACK.
+
+    ECHO (0x01):
+      - Всегда отвечаем нулевым пакетом во всех режимах.
     """
     def __init__(self, port: str, baud: int, check_interval_s: float = 0.2, verbose: bool = False):
         if serial is None:
@@ -216,6 +223,20 @@ class ControllerEmulator:
         return frame_wo_crc + bytes([crc])
 
     # --- TX helpers ---
+    def _send_zero_ack(self, tag: str = "ACK-ZERO"):
+        """Нулевой пакет (pin1=0, pin2=0, leds_num=0)."""
+        if not self.ser:
+            return
+        frame = self._build_ctrl2app(0, 0, [])
+        with self._tx_lock:
+            try:
+                self.ser.write(frame)
+                if self.verbose:
+                    print(f"[TX][{tag}] {frame.hex(' ')}", file=sys.stderr)
+            except Exception as e:
+                if self.verbose:
+                    print(f"[ERR] TX failed: {e}", file=sys.stderr)
+
     def _send_run_update(self, p1: int, p2: int):
         """RUN: немедленный ответ с одной LED-парой (p1,p2)."""
         if not self.ser:
@@ -249,7 +270,7 @@ class ControllerEmulator:
                     print(f"[ERR] TX failed: {e}", file=sys.stderr)
 
     def _send_check_led_press(self, p1: int, p2: int):
-        """CHECK: ответ на нажатие диода из приложения — одна LED-пара (p1,p2)."""
+        """CHECK: ответ на BTN_PRESSED из приложения — одна LED-пара (p1,p2)."""
         if not self.ser:
             return
         frame = self._build_ctrl2app(p1, p2, [(p1, p2)])
@@ -262,23 +283,32 @@ class ControllerEmulator:
                 if self.verbose:
                     print(f"[ERR] TX failed: {e}", file=sys.stderr)
 
-    def _send_zero_ack(self):
-        """0x06/0x07: нулевой ACK (pin1=0, pin2=0, leds_num=0)."""
-        if not self.ser:
-            return
-        frame = self._build_ctrl2app(0, 0, [])
-        with self._tx_lock:
-            try:
-                self.ser.write(frame)
-                if self.verbose:
-                    print(f"[TX][ACK-ZERO] {frame.hex(' ')}", file=sys.stderr)
-            except Exception as e:
-                if self.verbose:
-                    print(f"[ERR] TX failed: {e}", file=sys.stderr)
-
     # --- Обработка входящих пакетов ---
     def _on_a2c_packet(self, pkt: A2C_Packet):
         cmd = pkt.command
+
+        # Команды, на которые отвечаем независимо от режима
+        if cmd == CMD_ECHO:
+            if self.verbose:
+                print("[ECHO] request -> reply with empty status", file=sys.stderr)
+            self._send_zero_ack(tag="ECHO")
+            return
+
+        if cmd == CMD_MODE_DIODE_CLEAR:
+            if self.verbose:
+                print("[DIODE_CLEAR] accepted -> reply with empty status", file=sys.stderr)
+            self._send_zero_ack(tag="DIODE_CLEAR")
+            return
+
+        if cmd == CMD_DIODE_PRESSED:
+            if self.verbose:
+                print(f"[DIODE] pressed {pkt.pin1}-{pkt.pin2}", file=sys.stderr)
+            return
+
+        if cmd == CMD_DIODE_RELEASED:
+            if self.verbose:
+                print(f"[DIODE] released {pkt.pin1}-{pkt.pin2}", file=sys.stderr)
+            return
 
         # Переключение режимов
         if cmd == CMD_MODE_RUN:
@@ -301,19 +331,17 @@ class ControllerEmulator:
             return
 
         if cmd == CMD_MODE_DIODE_CONFIG:
-            # Вход в режим и немедленный нулевой ACK
             if self.verbose and self.state.mode != CMD_MODE_DIODE_CONFIG:
                 print("[MODE] DIODE_CONFIG", file=sys.stderr)
             self.state.set_mode(CMD_MODE_DIODE_CONFIG)
-            self._send_zero_ack()
+            self._send_zero_ack(tag="DIODE_CONFIG")
             return
 
         if cmd == CMD_MODE_DIODE_CONFIG_DEL:
-            # Вход в режим и немедленный нулевой ACK
             if self.verbose and self.state.mode != CMD_MODE_DIODE_CONFIG_DEL:
                 print("[MODE] DIODE_CONFIG_DEL", file=sys.stderr)
             self.state.set_mode(CMD_MODE_DIODE_CONFIG_DEL)
-            self._send_zero_ack()
+            self._send_zero_ack(tag="DIODE_CONFIG_DEL")
             return
 
         # Поведение по активным режимам
@@ -335,7 +363,7 @@ class ControllerEmulator:
             return  # прочее игнорируем
 
         if self.state.mode == CMD_MODE_CHECK_KEYBOARD:
-            # В CHECK входящие press/release — «нажатия на диод» от приложения.
+            # BTN_* в CHECK используем для эхо-нажатия диода (как ты просил ранее)
             if cmd == CMD_BTN_PRESSED:
                 p1, p2 = pkt.pin1, pkt.pin2
                 if 1 <= p1 <= 15 and 1 <= p2 <= 15:
@@ -352,9 +380,9 @@ class ControllerEmulator:
                 return
             return  # прочее игнорируем
 
-        # В 0x06/0x07 и CONFIGURE: press/release игнорируем (только лог при verbose)
-        if (cmd in (CMD_BTN_PRESSED, CMD_BTN_RELEASED)) and self.verbose:
-            print(f"[INFO] press/release ignored in mode 0x{self.state.mode:02X}", file=sys.stderr)
+        # Остальное — без ответа, только лог при verbose
+        if self.verbose:
+            print(f"[INFO] Cmd 0x{cmd:02X} ignored in mode 0x{self.state.mode:02X}", file=sys.stderr)
 
 
 # --- Helpers ---

@@ -451,10 +451,9 @@ void MainWindow::updateStatus(Pins pins, const QVector<Pins>& leds)
 void MainWindow::addDiodeItem(DiodeItem* diode)
 {
     connect(
-        diode, &DiodeItem::buttonPressed, [this](Pins pins) { emit appExecuteCommand(Command::ButtonPressed, pins); });
-    connect(diode,
-            &DiodeItem::buttonReleased,
-            [this](Pins pins) { emit appExecuteCommand(Command::ButtonReleased, pins); });
+        diode, &DiodeItem::buttonPressed, [this](Pins pins) { emit appExecuteCommand(Command::DiodePressed, pins); });
+    connect(
+        diode, &DiodeItem::buttonReleased, [this](Pins pins) { emit appExecuteCommand(Command::DiodeReleased, pins); });
 
     connect(this, &MainWindow::updateDiodeStatus, diode, &DiodeItem::onStatusUpdate);
     connect(this, &MainWindow::clearDiodeStatus, diode, &DiodeItem::clearStatus);
@@ -636,12 +635,15 @@ bool MainWindow::loadProjectFromPath(const QString& path)
     // Restore background
     setBackgroundImage(QPixmap::fromImage(project.background));
 
+    emit appExecuteCommand(Command::ModeDiodeClear, {0, 0});
+
     // Restore LEDs
     for (const auto& ledDef : project.leds)
     {
         auto* diode = new DiodeItem(ledDef);
         scene->addItem(diode);
         addDiodeItem(diode);
+        emit appExecuteCommand(Command::ModeDiodeConfig, {diode->getPin1(), diode->getPin2()});
     }
 
     // Restore buttons

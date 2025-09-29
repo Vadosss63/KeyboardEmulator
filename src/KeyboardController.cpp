@@ -31,7 +31,8 @@ void KeyboardController::onStatusReceived(Pins pins, const QVector<Pins>& leds)
 
 void KeyboardController::handleAppCommands(Command command, Pins pins)
 {
-    isConfUpdateInProgress = (command == Command::ModeDiodeConfig || command == Command::ModeDiodeConfigDel);
+    isConfUpdateInProgress = (command == Command::ModeDiodeConfig || command == Command::ModeDiodeConfigDel ||
+                              command == Command::ModeDiodeClear);
     m_model->sendCommand(command, pins);
 }
 
