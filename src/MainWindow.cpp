@@ -390,21 +390,15 @@ void MainWindow::pasteItem(QPointF pos)
 
 void MainWindow::setupMenus()
 {
-    comMenu = new ComPortMenu(this);
-    comMenu->createMenu(QStringLiteral("COM Порт"));
-    comMenu->addToMenuBar(menuBar());
-    comMenu->setTestPortVisible(true, QStringLiteral("/tmp/ttyV1"));
+    QMenu* comMenu = new QMenu("COM Порт", this);
+    currentComPort = comMenu->addAction("Текущий порт: None");
+    comMenu->addAction(currentComPort);
+    comMenu->addSeparator();
+    QAction* refreshAction = comMenu->addAction("Поиск устройства");
+    connect(refreshAction, &QAction::triggered, this, &MainWindow::refreshComPortList);
+    comMenu->addAction(refreshAction);
+    menuBar()->addMenu(comMenu);
 
-    comMenu->setCurrentPort(QString{});
-
-    connect(comMenu,
-            &ComPortMenu::portSelected,
-            this,
-            [this](const QString& name)
-            {
-                qDebug() << "Selected COM port:" << (name.isEmpty() ? "None" : name);
-                emit comPortSelected(name);
-            });
     QMenu* versionMenu = menuBar()->addMenu("Версия ПО");
     versionMenu->addAction(QStringLiteral(APP_VERSION));
 }
@@ -489,6 +483,11 @@ void MainWindow::updatePinStatus(AbstractItem* item)
     }
 
     emit appExecuteCommand(Command::ModeDiodeConfig, {item->getPin1(), item->getPin2()});
+}
+
+void MainWindow::updateComPort(const QString& portName)
+{
+    currentComPort->setText("Соединение: " + portName);
 }
 
 void MainWindow::addButtonItem(ButtonItem* button)

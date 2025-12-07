@@ -8,7 +8,6 @@
 #include <QStackedWidget>
 #include <cstdint>
 
-#include "ComPortMenu.h"
 #include "CommandDefinition.h"
 #include "CustomScene.h"
 #include "PinsDefinition.h"
@@ -53,6 +52,8 @@ signals:
 
     void projectReady(bool isReady);
 
+    void refreshComPortList();
+
 public slots:
     // Controller → View
     void updateStatus(Pins pins, const QVector<Pins>& leds);
@@ -62,6 +63,8 @@ public slots:
     void addResizableItem(ResizableRectItem* item);
 
     void updatePinStatus(AbstractItem* item);
+
+    void updateComPort(const QString& portName);
 
 private slots:
     void handleNewWorkMode(WorkMode mode);
@@ -137,7 +140,7 @@ private:
 
     QAction* statusAction{nullptr};
 
-    ComPortMenu* comMenu{nullptr};
+    QAction* currentComPort{nullptr};
 
     WorkMode currentWorkMode{WorkMode::Work};
 

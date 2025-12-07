@@ -1,8 +1,11 @@
 #include "SerialPortModel.h"
 
+#include <QDebug>
+
 SerialPortModel::SerialPortModel(QObject* parent) : QObject(parent), m_serial(new QSerialPort(this))
 {
     connect(m_serial, &QSerialPort::readyRead, this, &SerialPortModel::handleReadyRead);
+    connect(m_serial, &QSerialPort::errorOccurred, this, &SerialPortModel::handleError);
 }
 
 SerialPortModel::~SerialPortModel()
@@ -30,8 +33,15 @@ void SerialPortModel::closePort()
 {
     if (m_serial->isOpen())
     {
+        qDebug() << "Closing COM port:" << m_serial->portName();
         m_serial->close();
     }
+}
+
+void SerialPortModel::clearBuffer()
+{
+    m_buffer.append(m_serial->readAll());
+    m_buffer.clear();
 }
 
 void SerialPortModel::sendCommand(Command command, Pins pins)
@@ -52,6 +62,16 @@ void SerialPortModel::handleReadyRead()
 {
     m_buffer.append(m_serial->readAll());
     processBuffer();
+}
+
+void SerialPortModel::handleError(QSerialPort::SerialPortError error)
+{
+    if (error == QSerialPort::NoError)
+    {
+        return;
+    }
+
+    emit portError(m_serial->errorString());
 }
 
 void SerialPortModel::processBuffer()
@@ -85,6 +105,12 @@ void SerialPortModel::processBuffer()
 void SerialPortModel::parsePacket(QByteArray& frame)
 {
     const Ctrl2App_Packet* rp = reinterpret_cast<const Ctrl2App_Packet*>(frame.constData());
+
+    if (rp->leds_num == 0 && rp->pins.pin1 == 0 && rp->pins.pin2 == 0)
+    {
+        emit echoReceived();
+        // return;
+    }
 
     QVector<Pins> leds;
     leds.reserve(rp->leds_num);

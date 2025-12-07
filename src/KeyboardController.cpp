@@ -2,6 +2,7 @@
 
 #include <QSerialPortInfo>
 
+#include "SerialPortConnectionManager.h"
 #include "SerialPortModel.h"
 
 KeyboardController::KeyboardController(SerialPortModel* model, MainWindow* view, QObject* parent)
@@ -15,6 +16,37 @@ KeyboardController::KeyboardController(SerialPortModel* model, MainWindow* view,
 
     connect(m_view, &MainWindow::comPortSelected, [this](const QString& portName) { m_model->openPort(portName); });
     connect(m_view, &MainWindow::workModeChanged, this, &KeyboardController::handleWorkModeChanged);
+
+    connManager = new SerialPortConnectionManager(m_model, this);
+
+    connect(connManager,
+            &SerialPortConnectionManager::connected,
+            this,
+            [this](const QString& port) { m_view->updateComPort(port); });
+
+    connect(connManager,
+            &SerialPortConnectionManager::disconnected,
+            this,
+            [this]() { m_view->updateComPort(QString("Не подключено")); });
+
+    connect(connManager,
+            &SerialPortConnectionManager::connectionError,
+            this,
+            [&](const QString& err) { m_view->updateComPort(QString("Ошибка: %1").arg(err)); });
+
+    connManager->startAutoConnect();
+
+    connect(
+        m_view,
+        &MainWindow::refreshComPortList,
+        this,
+        [&]()
+        {
+            m_view->updateComPort(QString("Поиск..."));
+            connManager->stopAutoConnect();
+            connManager->startAutoConnect();
+        },
+        Qt::QueuedConnection);
 }
 
 void KeyboardController::onStatusReceived(Pins pins, const QVector<Pins>& leds)

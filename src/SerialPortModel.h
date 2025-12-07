@@ -19,16 +19,22 @@ public:
     bool openPort(const QString& portName, int baudRate = QSerialPort::Baud115200);
     void closePort();
 
+    void clearBuffer();
+
 public slots:
-    // App -> Controller
     void sendCommand(Command command, Pins pins = {0, 0});
 
 signals:
-    // Ctrl -> App
     void statusReceived(Pins pins, const QVector<Pins>& leds);
+
+    void echoReceived();
+
+    void portError(const QString& description);
 
 private slots:
     void handleReadyRead();
+
+    void handleError(QSerialPort::SerialPortError error);
 
 private:
     void processBuffer();

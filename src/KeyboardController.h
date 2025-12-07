@@ -7,6 +7,7 @@
 
 #include "KeyboardControllerProtocol.h"
 #include "MainWindow.h"
+#include "SerialPortConnectionManager.h"
 
 class SerialPortModel;
 
@@ -24,8 +25,9 @@ private slots:
     void handleWorkModeChanged(WorkMode mode);
 
 private:
-    SerialPortModel* m_model;
-    MainWindow*      m_view;
+    SerialPortModel*             m_model{nullptr};
+    SerialPortConnectionManager* connManager{nullptr};
+    MainWindow*                  m_view{nullptr};
 
     WorkMode m_currentMode{WorkMode::Modify};
 
