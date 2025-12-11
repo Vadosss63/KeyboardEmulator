@@ -15,5 +15,6 @@ enum class Command : uint8_t
     ModeDiodeConfigDel = 0x08,
     ModeDiodeClear     = 0x09,
     DiodePressed       = 0x0A,
-    DiodeReleased      = 0x0B
+    DiodeReleased      = 0x0B,
+    StatusUpdate       = 0x0C
 };

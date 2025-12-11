@@ -51,6 +51,7 @@ KeyboardController::KeyboardController(SerialPortModel* model, MainWindow* view,
 
 void KeyboardController::onStatusReceived(Pins pins, const QVector<Pins>& leds)
 {
+    // TODO: handle configuration update state more elegantly
     if (isConfUpdateInProgress)
     {
         isConfUpdateInProgress = false;

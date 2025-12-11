@@ -46,16 +46,8 @@ void SerialPortModel::clearBuffer()
 
 void SerialPortModel::sendCommand(Command command, Pins pins)
 {
-    App2Ctrl_Packet pkt;
-    pkt.sof     = PROTOCOL_SOF;
-    pkt.length  = sizeof(pkt) - offsetof(App2Ctrl_Packet, command); // command+pin1+pin2+checksum
-    pkt.command = command;
-    pkt.pins    = pins;
-    // SOF + Length + Command + Pin1 + Pin2
-    const size_t len_before_checksum = offsetof(App2Ctrl_Packet, checksum);
-
-    pkt.checksum = calc_checksum(reinterpret_cast<const uint8_t*>(&pkt), len_before_checksum);
-    m_serial->write(reinterpret_cast<const char*>(&pkt), sizeof(pkt));
+    auto packet = build_packet_for_cmd(command, pins);
+    m_serial->write(reinterpret_cast<const char*>(packet.data()), packet.size());
 }
 
 void SerialPortModel::handleReadyRead()
@@ -104,19 +96,27 @@ void SerialPortModel::processBuffer()
 
 void SerialPortModel::parsePacket(QByteArray& frame)
 {
-    const Ctrl2App_Packet* rp = reinterpret_cast<const Ctrl2App_Packet*>(frame.constData());
+    const Packet* rp = reinterpret_cast<const Packet*>(frame.constData());
 
-    if (rp->leds_num == 0 && rp->pins.pin1 == 0 && rp->pins.pin2 == 0)
+    if (rp->command == Command::Echo)
     {
         emit echoReceived();
-        // return;
+        return;
     }
 
-    QVector<Pins> leds;
-    leds.reserve(rp->leds_num);
-    for (int i = 0; i < rp->leds_num; ++i)
+    if (rp->command == Command::StatusUpdate)
     {
-        leds.append(rp->leds[i]);
+        const StatusPayload* status = reinterpret_cast<const StatusPayload*>(rp->payload);
+
+        QVector<Pins> leds;
+        leds.reserve(status->leds_num);
+        for (int i = 0; i < status->leds_num; ++i)
+        {
+            leds.append(status->leds[i]);
+        }
+        emit statusReceived(status->pins, leds);
+        return;
     }
-    emit statusReceived(rp->pins, leds);
+
+    emit receivedCommand(rp->command);
 }

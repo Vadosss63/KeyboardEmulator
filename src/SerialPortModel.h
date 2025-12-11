@@ -27,6 +27,8 @@ public slots:
 signals:
     void statusReceived(Pins pins, const QVector<Pins>& leds);
 
+    void receivedCommand(Command command);
+
     void echoReceived();
 
     void portError(const QString& description);
