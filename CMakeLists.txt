@@ -15,14 +15,18 @@ add_executable(${PROJECT_NAME} WIN32
     src/ButtonItem.cpp
     src/ButtonItem.h
     src/ComPortMenu.cpp
+    src/ComPortMenu.cpp
+    src/ComPortMenu.h
     src/ComPortMenu.h
     src/CustomScene.cpp
     src/CustomScene.h
     src/DiodeItem.cpp
     src/DiodeItem.h
     src/IFileDialogService.h
+    src/IFileDialogService.h
     src/ImageZoomWidget.cpp
     src/ImageZoomWidget.h
+    src/IMessageService.h
     src/KeyboardController.cpp
     src/KeyboardController.h
     src/main.cpp
@@ -35,11 +39,10 @@ add_executable(${PROJECT_NAME} WIN32
     src/protocol/CommandDefinition.h
     src/protocol/KeyboardControllerProtocol.h
     src/protocol/PinsDefinition.h
-    src/ComPortMenu.cpp
-    src/ComPortMenu.h
-    src/IFileDialogService.h
     src/QtFileDialogService.cpp
     src/QtFileDialogService.h
+    src/QtMessageService.cpp
+    src/QtMessageService.h
     src/RecentProjects.cpp
     src/RecentProjects.h
     src/ResizableRectItem.cpp

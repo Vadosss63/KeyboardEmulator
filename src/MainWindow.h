@@ -11,6 +11,7 @@
 #include "CommandDefinition.h"
 #include "CustomScene.h"
 #include "IFileDialogService.h"
+#include "IMessageService.h"
 #include "PinsDefinition.h"
 #include "RecentProjects.h"
 #include "WorkMode.h"
@@ -121,6 +122,7 @@ private:
     ComPortMenu*     comPortMenu{nullptr};
 
     std::unique_ptr<IFileDialogService> fileDialogs;
+    std::unique_ptr<IMessageService>    messageService;
 
     ResizableRectItem* copiedItem{nullptr};
 };

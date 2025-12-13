@@ -9,7 +9,6 @@
 #include <QGuiApplication>
 #include <QMenu>
 #include <QMenuBar>
-#include <QMessageBox>
 #include <QScreen>
 #include <QSerialPortInfo>
 #include <QWindow>
@@ -18,6 +17,7 @@
 #include "ImageZoomWidget.h"
 #include "ProjectIO.h"
 #include "QtFileDialogService.h"
+#include "QtMessageService.h"
 #include "StartScreenWidget.h"
 #include "WorkModeState.h"
 #include "WorkModeToolbar.h"
@@ -34,9 +34,10 @@ MainWindow::MainWindow(QWidget* parent)
     setupScene();
     setupMenus();
 
-    workModeUi    = new WorkModeToolbar(this, this);
-    workModeState = new WorkModeState(this);
-    fileDialogs   = std::make_unique<QtFileDialogService>(this);
+    workModeUi     = new WorkModeToolbar(this, this);
+    workModeState  = new WorkModeState(this);
+    fileDialogs    = std::make_unique<QtFileDialogService>(this);
+    messageService = std::make_unique<QtMessageService>(this);
 
     connect(scene, &CustomScene::diodeAdded, this, &MainWindow::addDiodeItem);
     connect(scene, &CustomScene::buttonAdded, this, &MainWindow::addButtonItem);
@@ -116,7 +117,10 @@ void MainWindow::handleRecentProjectRequested(const QString& path)
 
     if (!QFileInfo::exists(path))
     {
-        QMessageBox::warning(this, tr("Файл не найден"), tr("Файл не существует:\n%1").arg(path));
+        if (messageService)
+        {
+            messageService->showWarning(this, tr("Файл не найден"), tr("Файл не существует:\n%1").arg(path));
+        }
         m_recent.remove(path);
         refreshRecentProjects();
         return;
@@ -130,7 +134,10 @@ void MainWindow::handleRecentProjectRequested(const QString& path)
         return;
     }
 
-    QMessageBox::warning(this, tr("Ошибка открытия"), tr("Не удалось открыть проект:\n%1").arg(path));
+    if (messageService)
+    {
+        messageService->showWarning(this, tr("Ошибка открытия"), tr("Не удалось открыть проект:\n%1").arg(path));
+    }
     m_recent.remove(path);
     refreshRecentProjects();
 }
@@ -142,15 +149,14 @@ void MainWindow::handleClearRecentRequested()
         return;
     }
 
-    const auto reply = QMessageBox::question(this,
-                                             tr("Очистить список"),
-                                             tr("Очистить список последних проектов?"),
-                                             QMessageBox::Yes | QMessageBox::No,
-                                             QMessageBox::No);
-
-    if (reply != QMessageBox::Yes)
+    if (messageService)
     {
-        return;
+        const bool confirmed =
+            messageService->confirmQuestion(this, tr("Очистить список"), tr("Очистить список последних проектов?"));
+        if (!confirmed)
+        {
+            return;
+        }
     }
 
     m_recent.clear();
@@ -458,6 +464,11 @@ void MainWindow::saveProject()
     if (!ProjectIO::save(path, project))
     {
         qDebug() << "Failed to save project";
+        if (messageService)
+        {
+            messageService->showWarning(
+                this, tr("Ошибка сохранения"), tr("Не удалось сохранить проект:\n%1").arg(path));
+        }
         return;
     }
 
@@ -494,6 +505,10 @@ bool MainWindow::loadProjectFromPath(const QString& path)
     if (!ProjectIO::load(path, project))
     {
         qDebug() << "Failed to load project";
+        if (messageService)
+        {
+            messageService->showWarning(this, tr("Ошибка загрузки"), tr("Не удалось загрузить проект:\n%1").arg(path));
+        }
         return false;
     }
 
