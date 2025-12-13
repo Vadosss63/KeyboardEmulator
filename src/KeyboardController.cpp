@@ -12,7 +12,8 @@ KeyboardController::KeyboardController(SerialPortModel* model, MainWindow* view,
 
     // View -> Controller
     connect(m_view, &MainWindow::appExecuteCommand, this, &KeyboardController::handleAppCommands);
-    connect(m_view, &MainWindow::comPortSelected, [this](const QString& portName) { m_model->openPort(portName); });
+    connect(
+        m_view, &MainWindow::comPortSelected, this, [this](const QString& portName) { m_model->openPort(portName); });
     connect(m_view, &MainWindow::workModeChanged, this, &KeyboardController::handleWorkModeChanged);
 
     connManager = new SerialPortConnectionManager(m_model, this);
@@ -64,7 +65,7 @@ void KeyboardController::handleHwCmd(Command command)
 
     if (isConfigCommand)
     {
-        m_view->workModeChanged(m_currentMode);
+        emit m_view->workModeChanged(m_currentMode);
         return;
     }
 }

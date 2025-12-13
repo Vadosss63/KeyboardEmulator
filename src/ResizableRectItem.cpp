@@ -200,12 +200,12 @@ void ResizableRectItem::addDeleteItemAction(QMenu& menu)
 
     QMenu*   shapeMenu  = menu.addMenu(tr("Форма"));
     QAction* rectAction = shapeMenu->addAction(tr("Квадрат"));
-    connect(rectAction, &QAction::triggered, [this]() { setCircularShape(false); });
+    connect(rectAction, &QAction::triggered, this, [this]() { setCircularShape(false); });
     QAction* ellipseAction = shapeMenu->addAction(tr("Круг"));
-    connect(ellipseAction, &QAction::triggered, [this]() { setCircularShape(true); });
+    connect(ellipseAction, &QAction::triggered, this, [this]() { setCircularShape(true); });
 
     QAction* copyAction = menu.addAction(tr("Копировать"));
-    connect(copyAction, &QAction::triggered, [this]() { emit itemCopied(this); });
+    connect(copyAction, &QAction::triggered, this, [this]() { emit itemCopied(this); });
 }
 
 void ResizableRectItem::setupDeleteItemAction(QAction* /*deleteAction*/) {}

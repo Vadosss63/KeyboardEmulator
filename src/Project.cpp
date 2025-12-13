@@ -75,7 +75,8 @@ Project Project::fromManifestJson(const QByteArray& json)
 
     // buttons
     p.buttons.clear();
-    for (const auto& v : root.value("buttons").toArray())
+    const QJsonArray buttonsArray = root.value("buttons").toArray();
+    for (const auto& v : buttonsArray)
     {
         if (!v.isObject())
         {
@@ -94,7 +95,8 @@ Project Project::fromManifestJson(const QByteArray& json)
 
     // leds
     p.leds.clear();
-    for (const auto& v : root.value("leds").toArray())
+    const QJsonArray ledsArray = root.value("leds").toArray();
+    for (const auto& v : ledsArray)
     {
         if (!v.isObject())
         {

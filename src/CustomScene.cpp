@@ -53,13 +53,13 @@ void CustomScene::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
     {
         auto* btn = new ButtonItem(pos.x(), pos.y());
         addItem(btn);
-        buttonAdded(btn);
+        emit buttonAdded(btn);
     }
     else if (chosen == actDiode)
     {
         auto* d = new DiodeItem(pos.x(), pos.y());
         addItem(d);
-        diodeAdded(d);
+        emit diodeAdded(d);
     }
     else if (chosen == actPaste)
     {
