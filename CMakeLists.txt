@@ -16,6 +16,8 @@ add_executable(${PROJECT_NAME} WIN32
     src/ButtonItem.h
     src/ComPortMenu.cpp
     src/ComPortMenu.cpp
+    src/ComPortMenu.cpp
+    src/ComPortMenu.h
     src/ComPortMenu.h
     src/ComPortMenu.h
     src/CustomScene.cpp
@@ -24,8 +26,10 @@ add_executable(${PROJECT_NAME} WIN32
     src/DiodeItem.h
     src/IFileDialogService.h
     src/IFileDialogService.h
+    src/IFileDialogService.h
     src/ImageZoomWidget.cpp
     src/ImageZoomWidget.h
+    src/IMessageService.h
     src/IMessageService.h
     src/KeyboardController.cpp
     src/KeyboardController.h
@@ -50,6 +54,8 @@ add_executable(${PROJECT_NAME} WIN32
     src/ResizableRectItem.h
     src/ResizeHandle.cpp
     src/ResizeHandle.h
+    src/SceneController.cpp
+    src/SceneController.h
     src/SerialPortConnectionManager.cpp
     src/SerialPortConnectionManager.h
     src/SerialPortModel.cpp

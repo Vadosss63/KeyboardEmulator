@@ -2,15 +2,12 @@
 
 #include <QAction>
 #include <QCursor>
-#include <QDebug>
 #include <QDir>
 #include <QFileInfo>
-#include <QGraphicsPixmapItem>
 #include <QGuiApplication>
 #include <QMenu>
 #include <QMenuBar>
 #include <QScreen>
-#include <QSerialPortInfo>
 #include <QWindow>
 
 #include "ComPortMenu.h"
@@ -18,6 +15,7 @@
 #include "ProjectIO.h"
 #include "QtFileDialogService.h"
 #include "QtMessageService.h"
+#include "SceneController.h"
 #include "StartScreenWidget.h"
 #include "WorkModeState.h"
 #include "WorkModeToolbar.h"
@@ -35,16 +33,19 @@ MainWindow::MainWindow(QWidget* parent)
     setupScene();
     setupMenus();
 
-    workModeUi     = new WorkModeToolbar(this, this);
-    workModeState  = new WorkModeState(this);
-    fileDialogs    = std::make_unique<QtFileDialogService>(this);
-    messageService = std::make_unique<QtMessageService>(this);
+    workModeUi      = new WorkModeToolbar(this, this);
+    workModeState   = new WorkModeState(this);
+    sceneController = new SceneController(scene, this);
+    fileDialogs     = std::make_unique<QtFileDialogService>(this);
+    messageService  = std::make_unique<QtMessageService>(this);
 
-    connect(scene, &CustomScene::diodeAdded, this, &MainWindow::addDiodeItem);
-    connect(scene, &CustomScene::buttonAdded, this, &MainWindow::addButtonItem);
-    connect(scene, &CustomScene::pasteItem, this, &MainWindow::pasteItem);
+    connect(sceneController, &SceneController::diodeReady, this, &MainWindow::bindDiodeItem);
+    connect(sceneController, &SceneController::buttonReady, this, &MainWindow::bindButtonItem);
+    connect(sceneController, &SceneController::diodeAboutToBeRemoved, this, &MainWindow::handleDiodeRemoval);
+    connect(sceneController, &SceneController::buttonAboutToBeRemoved, this, &MainWindow::handleButtonRemoval);
 
     connect(this, &MainWindow::modifyModStatusChanged, scene, &CustomScene::setModifiable);
+    connect(this, &MainWindow::modifyModStatusChanged, sceneController, &SceneController::setModifyMode);
 
     createImageViewer();
 
@@ -213,39 +214,79 @@ void MainWindow::enableSceneMode(bool enable)
     stackedWidget->setCurrentWidget(target);
 }
 
-void MainWindow::copyItem(ResizableRectItem* item)
+void MainWindow::bindDiodeItem(DiodeItem* diode)
 {
-    copiedItem = item ? item->clone() : nullptr;
-    scene->setPasteEnabled(copiedItem != nullptr);
+    if (!diode)
+    {
+        return;
+    }
+
+    connect(diode,
+            &DiodeItem::buttonPressed,
+            this,
+            [this](Pins pins) { emit appExecuteCommand(Command::DiodePressed, pins); });
+    connect(diode,
+            &DiodeItem::buttonReleased,
+            this,
+            [this](Pins pins) { emit appExecuteCommand(Command::DiodeReleased, pins); });
+
+    connect(this, &MainWindow::updateDiodeStatus, diode, &DiodeItem::onStatusUpdate);
+    connect(this, &MainWindow::clearDiodeStatus, diode, &DiodeItem::clearStatus);
+    connect(this, &MainWindow::checkModStatusChanged, diode, &DiodeItem::setClickable);
+
+    connect(this,
+            &MainWindow::workModeChanged,
+            diode,
+            [diode](WorkMode mode)
+            {
+                const bool show = mode == WorkMode::Modify || mode == WorkMode::Check;
+                diode->setShowExtendedMenu(show);
+            });
+
+    connect(diode, &DiodeItem::pinsChanged, this, &MainWindow::updatePinStatus);
 }
 
-void MainWindow::pasteItem(QPointF pos)
+void MainWindow::bindButtonItem(ButtonItem* button)
 {
-    if (!copiedItem)
+    if (!button)
     {
         return;
     }
 
-    auto* newItem = copiedItem->clone();
-    // TODO: Improve position
-    newItem->setPos(newItem->pos() + QPointF(10, 10));
+    connect(button,
+            &ButtonItem::buttonPressed,
+            this,
+            [this](Pins pins) { emit appExecuteCommand(Command::ButtonPressed, pins); });
+    connect(button,
+            &ButtonItem::buttonReleased,
+            this,
+            [this](Pins pins) { emit appExecuteCommand(Command::ButtonReleased, pins); });
+    connect(this, &MainWindow::updateButtonStatus, button, &ButtonItem::onStatusUpdate);
+    connect(this, &MainWindow::clearButtonStatus, button, &ButtonItem::clearStatus);
+    connect(this, &MainWindow::workingModStatusChanged, button, &ButtonItem::setClickable);
 
-    if (DiodeItem* diode = dynamic_cast<DiodeItem*>(newItem))
+    connect(this,
+            &MainWindow::workModeChanged,
+            button,
+            [button](WorkMode mode)
+            {
+                const bool show = mode == WorkMode::Modify || mode == WorkMode::Check;
+                button->setShowExtendedMenu(show);
+            });
+}
+
+void MainWindow::handleDiodeRemoval(DiodeItem* diode)
+{
+    if (!diode)
     {
-        addDiodeItem(diode);
-        scene->addItem(diode);
         return;
     }
+    emit appExecuteCommand(Command::ModeDiodeConfigDel, {diode->getPin1(), diode->getPin2()});
+}
 
-    if (ButtonItem* button = dynamic_cast<ButtonItem*>(newItem))
-    {
-        addButtonItem(button);
-        scene->addItem(button);
-        return;
-    }
-
-    delete newItem;
-    return;
+void MainWindow::handleButtonRemoval(ButtonItem* /*button*/)
+{
+    // Currently nothing to propagate for button removal
 }
 
 void MainWindow::setupMenus()
@@ -300,44 +341,6 @@ void MainWindow::updateStatus(Pins pins, const QVector<Pins>& leds)
     }
 }
 
-void MainWindow::addDiodeItem(DiodeItem* diode)
-{
-    connect(diode,
-            &DiodeItem::buttonPressed,
-            this,
-            [this](Pins pins) { emit appExecuteCommand(Command::DiodePressed, pins); });
-    connect(diode,
-            &DiodeItem::buttonReleased,
-            this,
-            [this](Pins pins) { emit appExecuteCommand(Command::DiodeReleased, pins); });
-
-    connect(this, &MainWindow::updateDiodeStatus, diode, &DiodeItem::onStatusUpdate);
-    connect(this, &MainWindow::clearDiodeStatus, diode, &DiodeItem::clearStatus);
-    connect(this, &MainWindow::checkModStatusChanged, diode, &DiodeItem::setClickable);
-
-    connect(this,
-            &MainWindow::workModeChanged,
-            diode,
-            [diode](WorkMode mode)
-            {
-                const bool show = mode == WorkMode::Modify || mode == WorkMode::Check;
-                diode->setShowExtendedMenu(show);
-            });
-
-    connect(diode, &DiodeItem::pinsChanged, this, &MainWindow::updatePinStatus);
-
-    diodeItems.append(diode);
-    addResizableItem(diode);
-    connect(diode, &DiodeItem::removeItem, this, &MainWindow::deleteItem);
-}
-
-void MainWindow::addResizableItem(ResizableRectItem* item)
-{
-    connect(this, &MainWindow::modifyModStatusChanged, item, &ResizableRectItem::setResizable);
-    connect(item, &ResizableRectItem::itemCopied, this, &MainWindow::copyItem);
-    item->setResizable(currentMode() == WorkMode::Modify);
-}
-
 void MainWindow::updatePinStatus(AbstractItem* item)
 {
     if (!item)
@@ -354,80 +357,6 @@ void MainWindow::updateComPort(const QString& portName)
     {
         comPortMenu->setStatusText(tr("Соединение: %1").arg(portName));
     }
-}
-
-void MainWindow::addButtonItem(ButtonItem* button)
-{
-    connect(button,
-            &ButtonItem::buttonPressed,
-            this,
-            [this](Pins pins) { emit appExecuteCommand(Command::ButtonPressed, pins); });
-    connect(button,
-            &ButtonItem::buttonReleased,
-            this,
-            [this](Pins pins) { emit appExecuteCommand(Command::ButtonReleased, pins); });
-    connect(this, &MainWindow::updateButtonStatus, button, &ButtonItem::onStatusUpdate);
-    connect(this, &MainWindow::clearButtonStatus, button, &ButtonItem::clearStatus);
-    connect(this, &MainWindow::workingModStatusChanged, button, &ButtonItem::setClickable);
-
-    connect(this,
-            &MainWindow::workModeChanged,
-            button,
-            [button](WorkMode mode)
-            {
-                const bool show = mode == WorkMode::Modify || mode == WorkMode::Check;
-                button->setShowExtendedMenu(show);
-            });
-
-    addResizableItem(button);
-    buttonItems.append(button);
-    connect(button, &ButtonItem::removeItem, this, &MainWindow::deleteItem);
-}
-
-void MainWindow::deleteItem(AbstractItem* item)
-{
-    if (!item)
-    {
-        return;
-    }
-
-    if (DiodeItem* diode = dynamic_cast<DiodeItem*>(item))
-    {
-        deleteDiode(diode);
-        return;
-    }
-
-    if (ButtonItem* button = dynamic_cast<ButtonItem*>(item))
-    {
-        deleteButton(button);
-        return;
-    }
-}
-
-void MainWindow::deleteButton(ButtonItem* button)
-{
-    if (!button)
-    {
-        return;
-    }
-
-    scene->removeItem(button);
-    buttonItems.removeOne(button);
-    delete button;
-}
-
-void MainWindow::deleteDiode(DiodeItem* diode)
-{
-    if (!diode)
-    {
-        return;
-    }
-
-    emit appExecuteCommand(Command::ModeDiodeConfigDel, {diode->getPin1(), diode->getPin2()});
-
-    scene->removeItem(diode);
-    diodeItems.removeOne(diode);
-    delete diode;
 }
 
 void MainWindow::saveProject()
@@ -449,18 +378,24 @@ void MainWindow::saveProject()
         path += ".kbk";
     }
 
-    Project project;
-    for (const DiodeItem* diode : diodeItems)
+    Project     project;
+    const auto& diodes  = sceneController ? sceneController->diodes() : QList<DiodeItem*>{};
+    const auto& buttons = sceneController ? sceneController->buttons() : QList<ButtonItem*>{};
+
+    for (const DiodeItem* diode : diodes)
     {
         project.leds.append(diode->getDefinition());
     }
 
-    for (const ButtonItem* button : buttonItems)
+    for (const ButtonItem* button : buttons)
     {
         project.buttons.append(button->getDefinition());
     }
 
-    project.background = backgroundImage.toImage();
+    if (sceneController)
+    {
+        project.background = sceneController->background().toImage();
+    }
 
     LOG_INFO << "Saving project to " << path.toStdString() << std::endl;
     if (!ProjectIO::save(path, project))
@@ -524,8 +459,15 @@ bool MainWindow::loadProjectFromPath(const QString& path)
     for (const auto& ledDef : project.leds)
     {
         auto* diode = new DiodeItem(ledDef);
-        scene->addItem(diode);
-        addDiodeItem(diode);
+        if (sceneController)
+        {
+            sceneController->addExistingDiode(diode);
+        }
+        else
+        {
+            scene->addItem(diode);
+            bindDiodeItem(diode);
+        }
         emit appExecuteCommand(Command::ModeDiodeConfig, {diode->getPin1(), diode->getPin2()});
     }
 
@@ -533,8 +475,15 @@ bool MainWindow::loadProjectFromPath(const QString& path)
     for (const auto& buttonDef : project.buttons)
     {
         auto* button = new ButtonItem(buttonDef);
-        scene->addItem(button);
-        addButtonItem(button);
+        if (sceneController)
+        {
+            sceneController->addExistingButton(button);
+        }
+        else
+        {
+            scene->addItem(button);
+            bindButtonItem(button);
+        }
     }
 
     LOG_INFO << "Project loaded successfully from " << path.toStdString() << std::endl;
@@ -543,24 +492,14 @@ bool MainWindow::loadProjectFromPath(const QString& path)
     return true;
 }
 
-void MainWindow::clearItems()
-{
-    scene->clear();
-
-    diodeItems.clear();
-    buttonItems.clear();
-
-    copiedItem = nullptr;
-}
-
 void MainWindow::setBackgroundImage(const QPixmap& pixmap)
 {
-    // 1) Prepare scene
-    clearItems();
-    backgroundImage = pixmap;
-    auto* pix       = new QGraphicsPixmapItem(backgroundImage);
-    pix->setZValue(-1);
-    scene->addItem(pix);
+    if (sceneController)
+    {
+        sceneController->setBackground(pixmap);
+    }
+
+    const QPixmap& bg = sceneController ? sceneController->background() : pixmap;
 
     // 2) Adjust window size to fit image
     const QSize kMinWin(400, 300);
@@ -569,8 +508,8 @@ void MainWindow::setBackgroundImage(const QPixmap& pixmap)
     // Calculate logical image size considering device pixel ratio
     auto logicalImageSize = [&]
     {
-        QSize       px  = backgroundImage.size();             // пиксели
-        const qreal dpr = backgroundImage.devicePixelRatio(); // 1, 2, ...
+        QSize       px  = bg.size();             // пиксели
+        const qreal dpr = bg.devicePixelRatio(); // 1, 2, ...
         if (dpr > 0.0)
         {
             return QSize(qRound(px.width() / dpr), qRound(px.height() / dpr));
