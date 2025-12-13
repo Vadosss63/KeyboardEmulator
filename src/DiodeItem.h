@@ -22,4 +22,5 @@ protected:
 
 private:
     void addConfigMenu(QMenu& menu);
+    void refreshTextInfo();
 };

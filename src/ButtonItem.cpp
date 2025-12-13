@@ -5,7 +5,7 @@
 
 ButtonItem::ButtonItem(const ItemDef& def, QGraphicsItem* parent) : AbstractItem(def, parent)
 {
-    updateTextInfo();
+    refreshTextInfo();
 }
 
 ButtonItem::ButtonItem(qreal x, qreal y) : ButtonItem(ButtonDef{x, y}, nullptr) {}
@@ -45,6 +45,11 @@ void ButtonItem::addPinConfigMenu(QMenu& menu)
 }
 
 void ButtonItem::updateTextInfo()
+{
+    refreshTextInfo();
+}
+
+void ButtonItem::refreshTextInfo()
 {
     const QString info = QString("P1:%1\nP2:%2").arg(getPin1()).arg(getPin2());
     setInfoText(info);

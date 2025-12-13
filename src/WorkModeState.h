@@ -23,5 +23,5 @@ signals:
     void checkModeChanged(bool enable);
 
 private:
-    WorkMode m_mode{WorkMode::Modify};
+    WorkMode m_mode{WorkMode::None};
 };

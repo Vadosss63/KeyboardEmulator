@@ -7,7 +7,7 @@
 
 DiodeItem::DiodeItem(const ItemDef& def, QGraphicsItem* parent) : AbstractItem(def, parent)
 {
-    updateTextInfo();
+    refreshTextInfo();
 }
 
 DiodeItem::DiodeItem(qreal x, qreal y) : DiodeItem(LedDef{x, y}, nullptr) {}
@@ -47,6 +47,11 @@ void DiodeItem::addConfigMenu(QMenu& menu)
 }
 
 void DiodeItem::updateTextInfo()
+{
+    refreshTextInfo();
+}
+
+void DiodeItem::refreshTextInfo()
 {
     const QString info = QString("А:%1\nК:%2").arg(getPin1()).arg(getPin2());
     setInfoText(info);
