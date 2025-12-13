@@ -6,30 +6,26 @@
 #include <QDebug>
 #include <QFileDialog>
 #include <QFileInfo>
-#include <QFontMetrics>
 #include <QGraphicsPixmapItem>
 #include <QGuiApplication>
-#include <QLabel>
-#include <QListWidget>
 #include <QMenuBar>
 #include <QMessageBox>
-#include <QPushButton>
 #include <QScreen>
 #include <QSerialPortInfo>
 #include <QToolBar>
 #include <QToolButton>
-#include <QVBoxLayout>
 #include <QWindow>
 
 #include "ImageZoomWidget.h"
 #include "ProjectIO.h"
+#include "StartScreenWidget.h"
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
-    , startWidget(new QWidget(this))
     , scene(new CustomScene(this))
     , view(new QGraphicsView(scene, this))
     , stackedWidget(new QStackedWidget(this))
+    , startScreen(new StartScreenWidget(this))
 {
     setWindowTitle("Эмулятор клавиатуры");
 
@@ -45,110 +41,36 @@ MainWindow::MainWindow(QWidget* parent)
     connect(this, &MainWindow::modifyModStatusChanged, scene, &CustomScene::setModifiable);
 
     emit workModeChanged(WorkMode::Modify);
-    createStartWidget();
     createImageViewer();
 
-    stackedWidget->addWidget(startWidget);
+    stackedWidget->addWidget(startScreen);
     stackedWidget->addWidget(imageViewer);
     stackedWidget->addWidget(view);
-    stackedWidget->setCurrentWidget(startWidget);
+    stackedWidget->setCurrentWidget(startScreen);
     setCentralWidget(stackedWidget);
+
+    connect(startScreen, &StartScreenWidget::loadImageRequested, this, &MainWindow::loadImage);
+    connect(startScreen, &StartScreenWidget::loadProjectRequested, this, &MainWindow::loadProject);
+    connect(startScreen, &StartScreenWidget::recentItemActivated, this, &MainWindow::handleRecentProjectRequested);
+    connect(startScreen, &StartScreenWidget::clearRecentRequested, this, &MainWindow::handleClearRecentRequested);
+
+    refreshRecentProjects();
 
     connect(this, &MainWindow::projectReady, &MainWindow::enableSceneMode);
 }
 
-void MainWindow::createStartWidget()
+void MainWindow::refreshRecentProjects()
 {
-    auto* root = new QVBoxLayout(startWidget);
-    root->setContentsMargins(12, 12, 12, 12);
-    root->setSpacing(8);
-
-    auto* column = new QWidget(startWidget);
-    auto* colLay = new QVBoxLayout(column);
-    colLay->setContentsMargins(0, 0, 0, 0);
-    colLay->setSpacing(8);
-    root->addWidget(column, 0, Qt::AlignHCenter | Qt::AlignTop);
-
-    auto* label = new QLabel(tr("Выберите изображение или загрузите проект:"), column);
-    label->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-    colLay->addWidget(label);
-
-    const int SIDE_PAD = 24;
-    const int colWidth = QFontMetrics(label->font()).horizontalAdvance(label->text()) + SIDE_PAD;
-
-    auto* btnLoadImage   = new QPushButton(tr("Загрузить изображение"), column);
-    auto* btnLoadProject = new QPushButton(tr("Загрузить проект"), column);
-    btnLoadImage->setFixedWidth(colWidth);
-    btnLoadProject->setFixedWidth(colWidth);
-
-    colLay->addWidget(btnLoadImage, 0, Qt::AlignLeft);
-    colLay->addWidget(btnLoadProject, 0, Qt::AlignLeft);
-
-    connect(btnLoadImage, &QPushButton::clicked, this, &MainWindow::loadImage);
-    connect(btnLoadProject, &QPushButton::clicked, this, &MainWindow::loadProject);
-
-    auto* sep = new QFrame(column);
-    sep->setFrameShape(QFrame::HLine);
-    sep->setFrameShadow(QFrame::Sunken);
-    colLay->addWidget(sep);
-
-    auto* recentLabel = new QLabel(tr("Последние проекты:"), column);
-    recentLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-    colLay->addWidget(recentLabel);
-
-    recentList = new QListWidget(column);
-    recentList->setFixedWidth(colWidth);
-    recentList->setUniformItemSizes(true);
-    recentList->setAlternatingRowColors(false);
-    recentList->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    colLay->addWidget(recentList, 0, Qt::AlignLeft);
-
-    connect(recentList, &QListWidget::itemActivated, this, &MainWindow::openRecentItem);
-
-    auto* row = new QHBoxLayout;
-    row->addStretch();
-    auto* btnClear = new QPushButton(tr("Очистить список"), column);
-    row->addWidget(btnClear);
-    colLay->addLayout(row);
-
-    connect(btnClear, &QPushButton::clicked, this, &MainWindow::clearRecentList);
-
-    updateRecentListWidget();
-    resizeRecentListToContents();
-
-    startWidget->setMinimumSize(column->sizeHint().expandedTo(QSize(colWidth + 24, 0)));
-}
-
-void MainWindow::resizeRecentListToContents()
-{
-    if (!recentList)
+    if (!startScreen)
     {
         return;
     }
 
-    int rows = recentList->count();
-    int rowH = recentList->sizeHintForRow(0);
-    if (rowH <= 0)
-    {
-        rowH = QFontMetrics(recentList->font()).height() + 8;
-    }
-
-    const int maxRows = 5;
-    const int visible = qMax(1, qMin(rows, maxRows));
-    const int frame   = 2 * recentList->frameWidth();
-
-    const int h = (visible + 1) * rowH + frame + 4;
-    recentList->setFixedHeight(h);
+    startScreen->setRecentEntries(m_recent.list());
 }
 
-void MainWindow::openRecentItem(QListWidgetItem* item)
+void MainWindow::handleRecentProjectRequested(const QString& path)
 {
-    if (!item)
-    {
-        return;
-    }
-
-    const QString path = item->data(Qt::UserRole).toString();
     if (path.isEmpty())
     {
         return;
@@ -158,27 +80,26 @@ void MainWindow::openRecentItem(QListWidgetItem* item)
     {
         QMessageBox::warning(this, tr("Файл не найден"), tr("Файл не существует:\n%1").arg(path));
         m_recent.remove(path);
-        updateRecentListWidget();
+        refreshRecentProjects();
         return;
     }
 
     const bool ok = loadProjectFromPath(path);
-
     if (ok)
     {
         m_recent.add(path);
-        updateRecentListWidget();
+        refreshRecentProjects();
         return;
     }
 
     QMessageBox::warning(this, tr("Ошибка открытия"), tr("Не удалось открыть проект:\n%1").arg(path));
     m_recent.remove(path);
-    updateRecentListWidget();
+    refreshRecentProjects();
 }
 
-void MainWindow::clearRecentList()
+void MainWindow::handleClearRecentRequested()
 {
-    if (!recentList || recentList->count() == 0)
+    if (m_recent.list().isEmpty())
     {
         return;
     }
@@ -195,29 +116,8 @@ void MainWindow::clearRecentList()
     }
 
     m_recent.clear();
-    updateRecentListWidget();
+    refreshRecentProjects();
 }
-
-void MainWindow::updateRecentListWidget()
-{
-    if (!recentList)
-    {
-        return;
-    }
-
-    recentList->clear();
-    const QStringList items = m_recent.list();
-    for (const QString& p : items)
-    {
-        QFileInfo fi(p);
-        auto*     it = new QListWidgetItem(fi.fileName(), recentList);
-        it->setToolTip(p);
-        it->setData(Qt::UserRole, p);
-        recentList->addItem(it);
-    }
-    recentList->setEnabled(!items.isEmpty());
-}
-
 void MainWindow::createImageViewer()
 {
     if (!imageViewer)
@@ -350,7 +250,8 @@ void MainWindow::loadImage()
 
 void MainWindow::enableSceneMode(bool enable)
 {
-    stackedWidget->setCurrentWidget(enable ? view : startWidget);
+    QWidget* target = enable ? static_cast<QWidget*>(view) : static_cast<QWidget*>(startScreen);
+    stackedWidget->setCurrentWidget(target);
 }
 
 void MainWindow::copyItem(ResizableRectItem* item)
@@ -607,7 +508,7 @@ void MainWindow::saveProject()
 
     qDebug() << "Project saved successfully";
     m_recent.add(path);
-    updateRecentListWidget();
+    refreshRecentProjects();
 }
 
 void MainWindow::loadProject()
@@ -663,7 +564,7 @@ bool MainWindow::loadProjectFromPath(const QString& path)
 
     qDebug() << "Project loaded successfully";
     m_recent.add(path);
-    updateRecentListWidget();
+    refreshRecentProjects();
     return true;
 }
 

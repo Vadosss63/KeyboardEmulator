@@ -42,6 +42,8 @@ add_executable(${PROJECT_NAME} WIN32
     src/SerialPortConnectionManager.h
     src/SerialPortModel.cpp
     src/SerialPortModel.h
+    src/StartScreenWidget.cpp
+    src/StartScreenWidget.h
 )
 
 target_include_directories(${PROJECT_NAME}

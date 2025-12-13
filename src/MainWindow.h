@@ -1,8 +1,6 @@
 #pragma once
 
 #include <QGraphicsView>
-#include <QLabel>
-#include <QListWidgetItem>
 #include <QMainWindow>
 #include <QMenu>
 #include <QStackedWidget>
@@ -14,7 +12,7 @@
 #include "RecentProjects.h"
 
 class ImageZoomWidget;
-class QListWidget;
+class StartScreenWidget;
 
 enum class WorkMode
 {
@@ -85,16 +83,11 @@ private slots:
     void copyItem(ResizableRectItem* item);
 
     void pasteItem(QPointF pos);
-
-    void openRecentItem(QListWidgetItem* item);
-    void clearRecentList();
+    void handleRecentProjectRequested(const QString& path);
+    void handleClearRecentRequested();
 
 private:
-    void createStartWidget();
-
-    void resizeRecentListToContents();
-
-    void updateRecentListWidget();
+    void refreshRecentProjects();
 
     void createImageViewer();
 
@@ -112,11 +105,9 @@ private:
 
     bool loadProjectFromPath(const QString& path);
 
-    QWidget* startWidget{nullptr};
-
     RecentProjects m_recent{QStringLiteral("recentProjects"), 5};
 
-    QListWidget* recentList{nullptr};
+    StartScreenWidget* startScreen{nullptr};
 
     QStackedWidget* stackedWidget{nullptr};
 
