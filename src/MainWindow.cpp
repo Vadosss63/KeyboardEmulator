@@ -14,6 +14,7 @@
 #include <QSerialPortInfo>
 #include <QWindow>
 
+#include "ComPortMenu.h"
 #include "ImageZoomWidget.h"
 #include "ProjectIO.h"
 #include "QtFileDialogService.h"
@@ -242,14 +243,8 @@ void MainWindow::pasteItem(QPointF pos)
 
 void MainWindow::setupMenus()
 {
-    QMenu* comMenu = new QMenu("COM Порт", this);
-    currentComPort = comMenu->addAction("Текущий порт: None");
-    comMenu->addAction(currentComPort);
-    comMenu->addSeparator();
-    QAction* refreshAction = comMenu->addAction("Поиск устройства");
-    connect(refreshAction, &QAction::triggered, this, &MainWindow::refreshComPortList);
-    comMenu->addAction(refreshAction);
-    menuBar()->addMenu(comMenu);
+    comPortMenu = new ComPortMenu(this, this);
+    connect(comPortMenu, &ComPortMenu::refreshRequested, this, &MainWindow::refreshComPortList);
 
     QMenu* versionMenu = menuBar()->addMenu("Версия ПО");
     versionMenu->addAction(QStringLiteral(APP_VERSION));
@@ -347,7 +342,10 @@ void MainWindow::updatePinStatus(AbstractItem* item)
 
 void MainWindow::updateComPort(const QString& portName)
 {
-    currentComPort->setText("Соединение: " + portName);
+    if (comPortMenu)
+    {
+        comPortMenu->setStatusText(tr("Соединение: %1").arg(portName));
+    }
 }
 
 void MainWindow::addButtonItem(ButtonItem* button)

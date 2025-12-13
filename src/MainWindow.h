@@ -17,6 +17,7 @@
 
 class ImageZoomWidget;
 class StartScreenWidget;
+class ComPortMenu;
 class WorkModeToolbar;
 
 class MainWindow : public QMainWindow
@@ -118,9 +119,8 @@ private:
     QList<ButtonItem*> buttonItems{};
 
     WorkModeToolbar*                    workModeUi{nullptr};
+    ComPortMenu*                        comPortMenu{nullptr};
     std::unique_ptr<IFileDialogService> fileDialogs;
-
-    QAction* currentComPort{nullptr};
 
     WorkMode currentWorkMode{WorkMode::Work};
 
