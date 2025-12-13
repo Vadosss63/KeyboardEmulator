@@ -55,6 +55,18 @@ MainWindow::MainWindow(QWidget* parent)
     stackedWidget->setCurrentWidget(startScreen);
     setCentralWidget(stackedWidget);
 
+    connect(stackedWidget,
+            &QStackedWidget::currentChanged,
+            this,
+            [this](int)
+            {
+                if (workModeUi)
+                {
+                    const bool visible = stackedWidget->currentWidget() != startScreen;
+                    workModeUi->setVisible(visible);
+                }
+            });
+
     connect(startScreen, &StartScreenWidget::loadImageRequested, this, &MainWindow::loadImage);
     connect(startScreen, &StartScreenWidget::loadProjectRequested, this, &MainWindow::loadProject);
     connect(startScreen, &StartScreenWidget::recentItemActivated, this, &MainWindow::handleRecentProjectRequested);

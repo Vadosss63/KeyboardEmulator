@@ -24,6 +24,7 @@ public:
 public slots:
     void setProjectReady(bool ready);
     void setStatusText(const QString& text);
+    void setVisible(bool visible);
 
 signals:
     void workModeSelected(WorkMode mode);

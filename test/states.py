@@ -64,6 +64,9 @@ class RunState(BaseState):
             if emu.verbose:
                 import sys
                 print(f"[RUN] release {pkt.pin1}-{pkt.pin2}", file=sys.stderr)
+            
+            frame = build_status(pkt.pin1, pkt.pin2, [])
+            emu._send_frame(frame, tag="RUN")
             return
 
         super().handle_packet(pkt, emu)

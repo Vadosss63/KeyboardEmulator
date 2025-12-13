@@ -35,6 +35,7 @@ WorkModeToolbar::WorkModeToolbar(QMainWindow* window, QObject* parent) : QObject
     m_modeButton->setMenu(menu);
     m_modeButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
     m_modeButton->setEnabled(false);
+    m_toolbar->setVisible(false);
 
     m_toolbar->addWidget(m_modeButton);
 
@@ -103,6 +104,14 @@ void WorkModeToolbar::setStatusText(const QString& text)
     if (m_statusAction)
     {
         m_statusAction->setText(text);
+    }
+}
+
+void WorkModeToolbar::setVisible(bool visible)
+{
+    if (m_toolbar)
+    {
+        m_toolbar->setVisible(visible);
     }
 }
 
