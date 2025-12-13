@@ -19,9 +19,9 @@ public:
 
 private slots:
     void onStatusReceived(Pins pins, const QVector<Pins>& leds);
+    void handleHwCmd(Command command);
 
     void handleAppCommands(Command command, Pins pins);
-
     void handleWorkModeChanged(WorkMode mode);
 
 private:
@@ -30,6 +30,4 @@ private:
     MainWindow*                  m_view{nullptr};
 
     WorkMode m_currentMode{WorkMode::Modify};
-
-    bool isConfUpdateInProgress{false};
 };

@@ -1,7 +1,5 @@
 #include "KeyboardController.h"
 
-#include <QSerialPortInfo>
-
 #include "SerialPortConnectionManager.h"
 #include "SerialPortModel.h"
 
@@ -10,10 +8,10 @@ KeyboardController::KeyboardController(SerialPortModel* model, MainWindow* view,
 {
     // Model -> Controller slots
     connect(m_model, &SerialPortModel::statusReceived, this, &KeyboardController::onStatusReceived);
+    connect(m_model, &SerialPortModel::receivedCommand, this, &KeyboardController::handleHwCmd);
 
     // View -> Controller
     connect(m_view, &MainWindow::appExecuteCommand, this, &KeyboardController::handleAppCommands);
-
     connect(m_view, &MainWindow::comPortSelected, [this](const QString& portName) { m_model->openPort(portName); });
     connect(m_view, &MainWindow::workModeChanged, this, &KeyboardController::handleWorkModeChanged);
 
@@ -32,7 +30,7 @@ KeyboardController::KeyboardController(SerialPortModel* model, MainWindow* view,
     connect(connManager,
             &SerialPortConnectionManager::connectionError,
             this,
-            [&](const QString& err) { m_view->updateComPort(QString("Ошибка: %1").arg(err)); });
+            [this](const QString& err) { m_view->updateComPort(QString("Ошибка: %1").arg(err)); });
 
     connManager->startAutoConnect();
 
@@ -40,7 +38,7 @@ KeyboardController::KeyboardController(SerialPortModel* model, MainWindow* view,
         m_view,
         &MainWindow::refreshComPortList,
         this,
-        [&]()
+        [this]()
         {
             m_view->updateComPort(QString("Поиск..."));
             connManager->stopAutoConnect();
@@ -51,22 +49,24 @@ KeyboardController::KeyboardController(SerialPortModel* model, MainWindow* view,
 
 void KeyboardController::onStatusReceived(Pins pins, const QVector<Pins>& leds)
 {
-    // TODO: handle configuration update state more elegantly
-    if (isConfUpdateInProgress)
-    {
-        isConfUpdateInProgress = false;
-        m_view->workModeChanged(m_currentMode);
-        return;
-    }
-
     m_view->updateStatus(pins, leds);
 }
 
 void KeyboardController::handleAppCommands(Command command, Pins pins)
 {
-    isConfUpdateInProgress = (command == Command::ModeDiodeConfig || command == Command::ModeDiodeConfigDel ||
-                              command == Command::ModeDiodeClear);
     m_model->sendCommand(command, pins);
+}
+
+void KeyboardController::handleHwCmd(Command command)
+{
+    const bool isConfigCommand = (command == Command::ModeDiodeConfig || command == Command::ModeDiodeConfigDel ||
+                                  command == Command::ModeDiodeClear);
+
+    if (isConfigCommand)
+    {
+        m_view->workModeChanged(m_currentMode);
+        return;
+    }
 }
 
 void KeyboardController::handleWorkModeChanged(WorkMode mode)

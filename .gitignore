@@ -58,3 +58,17 @@ build
 
 # conan
 *CMakeUserPresets.json
+
+# python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+env/
+venv/
+ENV/
+VENV/
+.venv/
+.env/
+.pytest_cache/
+.ipynb_checkpoints/ 
