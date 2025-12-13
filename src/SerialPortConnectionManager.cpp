@@ -37,14 +37,14 @@ void SerialPortConnectionManager::setHeartbeatInterval(int ms)
     }
 }
 
-bool SerialPortConnectionManager::sendCommand(Command cmd, Pins pins)
+bool SerialPortConnectionManager::sendCommand(Command cmd)
 {
     if (!isConnected())
     {
         return false;
     }
 
-    m_portModel->sendCommand(cmd, pins);
+    m_portModel->sendCommand(cmd);
     return true;
 }
 

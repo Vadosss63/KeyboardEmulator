@@ -41,7 +41,7 @@ static inline uint8_t calc_checksum(const uint8_t* data, size_t len)
 }
 
 template <typename T>
-static inline std::vector<uint8_t> build_packet_for_cmd(Command cmd, const T& payload)
+std::vector<uint8_t> build_packet_for_cmd(Command cmd, const T& payload)
 {
     constexpr size_t payload_size = sizeof(T);
     constexpr size_t total_size   = offsetof(Packet, payload) + payload_size + sizeof(uint8_t); // + checksum
@@ -59,5 +59,22 @@ static inline std::vector<uint8_t> build_packet_for_cmd(Command cmd, const T& pa
 
     out_buffer.back() = calc_checksum(reinterpret_cast<const uint8_t*>(pkt), len_before_checksum);
 
+    return out_buffer;
+}
+
+inline std::vector<uint8_t> build_packet_for_cmd(Command cmd)
+{
+    constexpr size_t total_size = offsetof(Packet, payload) + sizeof(uint8_t); // + checksum
+
+    std::vector<uint8_t> out_buffer(total_size);
+
+    Packet* pkt  = reinterpret_cast<Packet*>(out_buffer.data());
+    pkt->sof     = PROTOCOL_SOF;
+    pkt->length  = static_cast<uint8_t>(total_size - 2); //
+    pkt->command = cmd;
+
+    constexpr size_t len_before_checksum = total_size - 1; // exclude checksum
+
+    out_buffer.back() = calc_checksum(reinterpret_cast<const uint8_t*>(pkt), len_before_checksum);
     return out_buffer;
 }

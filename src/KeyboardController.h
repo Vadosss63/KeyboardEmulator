@@ -1,8 +1,6 @@
 #pragma once
 
-#include <QByteArray>
 #include <QObject>
-#include <QSerialPort>
 #include <QVector>
 
 #include "KeyboardControllerProtocol.h"

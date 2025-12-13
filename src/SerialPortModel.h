@@ -21,8 +21,9 @@ public:
 
     void clearBuffer();
 
-public slots:
-    void sendCommand(Command command, Pins pins = {0, 0});
+public:
+    void sendCommand(Command command, Pins pins);
+    void sendCommand(Command command);
 
 signals:
     void statusReceived(Pins pins, const QVector<Pins>& leds);

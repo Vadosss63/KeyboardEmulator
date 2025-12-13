@@ -127,13 +127,13 @@ class ControllerEmulator:
 
         if cmd == CMD_ECHO:
             if self.verbose:
-                print("[ECHO] request -> reply with empty status", file=sys.stderr)
+                print("[ECHO] request -> reply ACK", file=sys.stderr)
             self._send_zero_ack(CMD_ECHO, tag="ECHO")
             return
 
         if cmd == CMD_MODE_DIODE_CLEAR:
             if self.verbose:
-                print("[DIODE_CLEAR] accepted -> reply with empty status", file=sys.stderr)
+                print("[DIODE_CLEAR] accepted -> reply with ACK", file=sys.stderr)
             self._send_zero_ack(CMD_MODE_DIODE_CLEAR, tag="DIODE_CLEAR")
             return
 

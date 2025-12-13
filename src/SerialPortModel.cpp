@@ -50,6 +50,12 @@ void SerialPortModel::sendCommand(Command command, Pins pins)
     m_serial->write(reinterpret_cast<const char*>(packet.data()), packet.size());
 }
 
+void SerialPortModel::sendCommand(Command command)
+{
+    auto packet = build_packet_for_cmd(command);
+    m_serial->write(reinterpret_cast<const char*>(packet.data()), packet.size());
+}
+
 void SerialPortModel::handleReadyRead()
 {
     m_buffer.append(m_serial->readAll());

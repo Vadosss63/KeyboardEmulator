@@ -20,7 +20,7 @@ public:
 
     void setHeartbeatInterval(int ms);
 
-    bool sendCommand(Command cmd, Pins pins = {0, 0});
+    bool sendCommand(Command cmd);
 
 signals:
     void connected(const QString& portName);
