@@ -6,9 +6,11 @@
 #include <QMenu>
 #include <QStackedWidget>
 #include <cstdint>
+#include <memory>
 
 #include "CommandDefinition.h"
 #include "CustomScene.h"
+#include "IFileDialogService.h"
 #include "PinsDefinition.h"
 #include "RecentProjects.h"
 #include "WorkMode.h"
@@ -115,7 +117,8 @@ private:
     QList<DiodeItem*>  diodeItems{};
     QList<ButtonItem*> buttonItems{};
 
-    WorkModeToolbar* workModeUi{nullptr};
+    WorkModeToolbar*                    workModeUi{nullptr};
+    std::unique_ptr<IFileDialogService> fileDialogs;
 
     QAction* currentComPort{nullptr};
 

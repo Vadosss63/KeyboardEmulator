@@ -4,7 +4,6 @@
 #include <QCursor>
 #include <QDebug>
 #include <QDir>
-#include <QFileDialog>
 #include <QFileInfo>
 #include <QGraphicsPixmapItem>
 #include <QGuiApplication>
@@ -17,6 +16,7 @@
 
 #include "ImageZoomWidget.h"
 #include "ProjectIO.h"
+#include "QtFileDialogService.h"
 #include "StartScreenWidget.h"
 #include "WorkModeToolbar.h"
 
@@ -32,7 +32,8 @@ MainWindow::MainWindow(QWidget* parent)
     setupScene();
     setupMenus();
 
-    workModeUi = new WorkModeToolbar(this, this);
+    workModeUi  = new WorkModeToolbar(this, this);
+    fileDialogs = std::make_unique<QtFileDialogService>(this);
 
     connect(scene, &CustomScene::diodeAdded, this, &MainWindow::addDiodeItem);
     connect(scene, &CustomScene::buttonAdded, this, &MainWindow::addButtonItem);
@@ -177,7 +178,13 @@ void MainWindow::handleNewWorkMode(WorkMode mode)
 
 void MainWindow::loadImage()
 {
-    QString path = QFileDialog::getOpenFileName(this, "Выбор изображения клавиатуры", {}, "Images (*.png *.jpg)");
+    if (!fileDialogs)
+    {
+        return;
+    }
+
+    const QString path =
+        fileDialogs->openFile(this, tr("Выбор изображения клавиатуры"), QString(), tr("Images (*.png *.jpg)"));
     if (path.isEmpty())
     {
         return;
@@ -421,8 +428,10 @@ void MainWindow::saveProject()
 {
     QString dir = m_recent.lastOpenDir();
 
-    QString path = QFileDialog::getSaveFileName(
-        this, "Сохранить проект", dir.isEmpty() ? QDir::homePath() : dir, "Keyboard Project (*.kbk)");
+    const QString startDir = dir.isEmpty() ? QDir::homePath() : dir;
+    QString       path     = fileDialogs
+                                 ? fileDialogs->saveFile(this, tr("Сохранить проект"), startDir, tr("Keyboard Project (*.kbk)"))
+                                 : QString();
 
     if (path.isEmpty())
     {
@@ -462,8 +471,10 @@ void MainWindow::loadProject()
 {
     QString dir = m_recent.lastOpenDir();
 
-    QString path = QFileDialog::getOpenFileName(
-        this, "Загрузить проект", dir.isEmpty() ? QDir::homePath() : dir, "Keyboard Project (*.kbk)");
+    const QString startDir = dir.isEmpty() ? QDir::homePath() : dir;
+    QString       path     = fileDialogs
+                                 ? fileDialogs->openFile(this, tr("Загрузить проект"), startDir, tr("Keyboard Project (*.kbk)"))
+                                 : QString();
 
     if (path.isEmpty())
     {

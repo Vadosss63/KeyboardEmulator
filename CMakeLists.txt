@@ -44,6 +44,9 @@ add_executable(${PROJECT_NAME} WIN32
     src/SerialPortModel.h
     src/StartScreenWidget.cpp
     src/StartScreenWidget.h
+    src/IFileDialogService.h
+    src/QtFileDialogService.cpp
+    src/QtFileDialogService.h
     src/WorkMode.h
     src/WorkModeToolbar.cpp
     src/WorkModeToolbar.h
