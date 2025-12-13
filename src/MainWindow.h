@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QGraphicsView>
+#include <QList>
 #include <QMainWindow>
 #include <QMenu>
 #include <QStackedWidget>
@@ -10,17 +11,11 @@
 #include "CustomScene.h"
 #include "PinsDefinition.h"
 #include "RecentProjects.h"
+#include "WorkMode.h"
 
 class ImageZoomWidget;
 class StartScreenWidget;
-
-enum class WorkMode
-{
-    Work = 0,
-    Check,
-    Modify,
-    DiodeConf,
-};
+class WorkModeToolbar;
 
 class MainWindow : public QMainWindow
 {
@@ -92,7 +87,6 @@ private:
     void createImageViewer();
 
     void setupScene();
-    void setupToolbar();
 
     void setupMenus();
 
@@ -121,15 +115,7 @@ private:
     QList<DiodeItem*>  diodeItems{};
     QList<ButtonItem*> buttonItems{};
 
-    QAction* loadImgAction{nullptr};
-    QAction* modeCheckAction{nullptr};
-    QAction* modeRunAction{nullptr};
-    QAction* modifyAction{nullptr};
-
-    QAction* saveProjectAction{nullptr};
-    QAction* loadProjectAction{nullptr};
-
-    QAction* statusAction{nullptr};
+    WorkModeToolbar* workModeUi{nullptr};
 
     QAction* currentComPort{nullptr};
 

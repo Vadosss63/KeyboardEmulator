@@ -4,8 +4,10 @@
 #include <QVector>
 
 #include "KeyboardControllerProtocol.h"
-#include "MainWindow.h"
 #include "SerialPortConnectionManager.h"
+#include "WorkMode.h"
+
+class MainWindow;
 
 class SerialPortModel;
 

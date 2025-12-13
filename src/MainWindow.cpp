@@ -1,24 +1,24 @@
 #include "MainWindow.h"
 
 #include <QAction>
-#include <QActionGroup>
 #include <QCursor>
 #include <QDebug>
+#include <QDir>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QGraphicsPixmapItem>
 #include <QGuiApplication>
+#include <QMenu>
 #include <QMenuBar>
 #include <QMessageBox>
 #include <QScreen>
 #include <QSerialPortInfo>
-#include <QToolBar>
-#include <QToolButton>
 #include <QWindow>
 
 #include "ImageZoomWidget.h"
 #include "ProjectIO.h"
 #include "StartScreenWidget.h"
+#include "WorkModeToolbar.h"
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
@@ -30,8 +30,9 @@ MainWindow::MainWindow(QWidget* parent)
     setWindowTitle("Эмулятор клавиатуры");
 
     setupScene();
-    setupToolbar();
     setupMenus();
+
+    workModeUi = new WorkModeToolbar(this, this);
 
     connect(scene, &CustomScene::diodeAdded, this, &MainWindow::addDiodeItem);
     connect(scene, &CustomScene::buttonAdded, this, &MainWindow::addButtonItem);
@@ -40,7 +41,6 @@ MainWindow::MainWindow(QWidget* parent)
     connect(this, &MainWindow::workModeChanged, this, &MainWindow::handleNewWorkMode);
     connect(this, &MainWindow::modifyModStatusChanged, scene, &CustomScene::setModifiable);
 
-    emit workModeChanged(WorkMode::Modify);
     createImageViewer();
 
     stackedWidget->addWidget(startScreen);
@@ -53,6 +53,15 @@ MainWindow::MainWindow(QWidget* parent)
     connect(startScreen, &StartScreenWidget::loadProjectRequested, this, &MainWindow::loadProject);
     connect(startScreen, &StartScreenWidget::recentItemActivated, this, &MainWindow::handleRecentProjectRequested);
     connect(startScreen, &StartScreenWidget::clearRecentRequested, this, &MainWindow::handleClearRecentRequested);
+
+    connect(
+        workModeUi, &WorkModeToolbar::workModeSelected, this, [this](WorkMode mode) { emit workModeChanged(mode); });
+    connect(workModeUi, &WorkModeToolbar::loadImageRequested, this, &MainWindow::loadImage);
+    connect(workModeUi, &WorkModeToolbar::saveProjectRequested, this, &MainWindow::saveProject);
+    connect(workModeUi, &WorkModeToolbar::loadProjectRequested, this, &MainWindow::loadProject);
+    connect(this, &MainWindow::projectReady, workModeUi, &WorkModeToolbar::setProjectReady);
+
+    emit workModeChanged(WorkMode::Modify);
 
     refreshRecentProjects();
 
@@ -157,78 +166,13 @@ bool MainWindow::isCheckMode() const
 void MainWindow::handleNewWorkMode(WorkMode mode)
 {
     currentWorkMode = mode;
+    if (workModeUi)
+    {
+        workModeUi->setCurrentMode(mode);
+    }
     emit modifyModStatusChanged(isModifyMode());
     emit workingModStatusChanged(isWorkingMode());
     emit checkModStatusChanged(isCheckMode());
-}
-
-void MainWindow::setupToolbar()
-{
-    auto* tb = addToolBar("WorkMode");
-
-    auto* modeMenu = new QMenu(this);
-    auto* group    = new QActionGroup(modeMenu);
-    group->setExclusive(true);
-
-    auto* actCheck = modeMenu->addAction(tr("Проверка клавиатуры"));
-    actCheck->setCheckable(true);
-    actCheck->setData(static_cast<int>(WorkMode::Check));
-    actCheck->setActionGroup(group);
-
-    auto* actRun = modeMenu->addAction(tr("Режим работы"));
-    actRun->setCheckable(true);
-    actRun->setData(static_cast<int>(WorkMode::Work));
-    actRun->setActionGroup(group);
-
-    auto* actModify = modeMenu->addAction(tr("Режим модификации"));
-    actModify->setCheckable(true);
-    actModify->setData(static_cast<int>(WorkMode::Modify));
-    actModify->setActionGroup(group);
-
-    auto* modeBtn = new QToolButton(this);
-    modeBtn->setPopupMode(QToolButton::InstantPopup);
-    modeBtn->setMenu(modeMenu);
-    modeBtn->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
-
-    modeBtn->setDefaultAction(actModify);
-    actModify->setChecked(true);
-
-    tb->addWidget(modeBtn);
-
-    connect(this, &MainWindow::projectReady, modeBtn, &QToolButton::setEnabled);
-    modeBtn->setEnabled(false);
-
-    connect(group,
-            &QActionGroup::triggered,
-            this,
-            [this, modeBtn](QAction* act)
-            {
-                modeBtn->setDefaultAction(act);
-                const auto mode = static_cast<WorkMode>(act->data().toInt());
-                emit       workModeChanged(mode);
-            });
-
-    loadImgAction = tb->addAction("Загрузка изображения");
-    connect(loadImgAction, &QAction::triggered, this, &MainWindow::loadImage);
-
-    connect(this, &MainWindow::modifyModStatusChanged, loadImgAction, &QAction::setVisible);
-
-    saveProjectAction = tb->addAction("Сохранить проект");
-    connect(saveProjectAction, &QAction::triggered, this, &MainWindow::saveProject);
-    connect(this, &MainWindow::modifyModStatusChanged, saveProjectAction, &QAction::setVisible);
-    connect(this, &MainWindow::projectReady, saveProjectAction, &QAction::setEnabled);
-    saveProjectAction->setEnabled(false);
-
-    loadProjectAction = tb->addAction("Загрузить проект");
-    connect(loadProjectAction, &QAction::triggered, this, &MainWindow::loadProject);
-    connect(this, &MainWindow::modifyModStatusChanged, loadProjectAction, &QAction::setVisible);
-
-    statusAction = tb->addAction("Pins: P1: , P2: , LEDs: ");
-    statusAction->setCheckable(false);
-    statusAction->setVisible(false);
-    connect(this,
-            &MainWindow::workModeChanged,
-            [this](WorkMode mode) { statusAction->setVisible(mode == WorkMode::Check); });
 }
 
 void MainWindow::loadImage()
@@ -337,7 +281,10 @@ void MainWindow::updateStatus(Pins pins, const QVector<Pins>& leds)
             statusText.append(QString("A%1:K%2").arg(led.pin1).arg(led.pin2));
             countActiveLeds++;
         }
-        statusAction->setText(statusText);
+        if (workModeUi)
+        {
+            workModeUi->setStatusText(statusText);
+        }
 
         emit updateButtonStatus(pins, true);
     }

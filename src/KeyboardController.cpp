@@ -1,5 +1,6 @@
 #include "KeyboardController.h"
 
+#include "MainWindow.h"
 #include "SerialPortConnectionManager.h"
 #include "SerialPortModel.h"
 
