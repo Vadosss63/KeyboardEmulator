@@ -1,6 +1,6 @@
 #include "SerialPortConnectionManager.h"
 
-#include <QDebug>
+#include "logger.h"
 
 SerialPortConnectionManager::SerialPortConnectionManager(SerialPortModel* portModel, QObject* parent)
     : QObject(parent), m_portModel(portModel)
@@ -52,9 +52,11 @@ void SerialPortConnectionManager::startAutoConnect()
 {
     if (m_state != State::Disconnected)
     {
+        LOG_WRN << "Auto-connect requested but manager state is not disconnected" << std::endl;
         return;
     }
 
+    LOG_INFO << "Starting auto-connect probing" << std::endl;
     probePorts();
 }
 
@@ -68,6 +70,7 @@ void SerialPortConnectionManager::stopAutoConnect()
     m_portModel->closePort();
     m_state = State::Disconnected;
     m_currentPortName.clear();
+    LOG_INFO << "Auto-connect stopped" << std::endl;
     emit disconnected();
 }
 
@@ -91,8 +94,10 @@ void SerialPortConnectionManager::probePorts()
 
     m_state = State::Probing;
 
+    LOG_INFO << "Probing " << m_ports.size() << " COM ports" << std::endl;
     if (m_ports.isEmpty())
     {
+        LOG_WRN << "No COM ports available" << std::endl;
         emit connectionError(tr("Нет доступных COM-портов"));
         m_state = State::Disconnected;
         return;
@@ -113,6 +118,7 @@ void SerialPortConnectionManager::probeNextPort()
     if (m_currentPortIndex >= m_ports.size())
     {
         m_state = State::Disconnected;
+        LOG_ERR << "Device not found on available COM ports" << std::endl;
         emit connectionError(tr("Не удалось найти устройство"));
         emit disconnected();
         return;
@@ -125,10 +131,11 @@ void SerialPortConnectionManager::probeNextPort()
 void SerialPortConnectionManager::openAndTestPort(const QSerialPortInfo& info)
 {
     const QString portName = (info.portName().isEmpty() ? "/tmp/ttyV1" : info.portName());
-    qDebug() << "Selected COM port:" << portName;
+    LOG_INFO << "Testing COM port " << portName.toStdString() << std::endl;
 
     if (!m_portModel->openPort(portName))
     {
+        LOG_WRN << "Failed to open COM port " << portName.toStdString() << ", trying next" << std::endl;
         probeNextPort();
         return;
     }
@@ -160,6 +167,7 @@ void SerialPortConnectionManager::onEchoReceived()
 void SerialPortConnectionManager::handleConnectSuccess()
 {
     m_state = State::Connected;
+    LOG_INFO << "Connected on port " << m_currentPortName.toStdString() << std::endl;
     emit connected(m_currentPortName);
 
     m_heartbeatTimer.start(m_heartbeatIntervalMs);
@@ -167,6 +175,7 @@ void SerialPortConnectionManager::handleConnectSuccess()
 
 void SerialPortConnectionManager::onPortError(const QString& description)
 {
+    LOG_ERR << "Serial port error: " << description.toStdString() << std::endl;
     emit connectionError(description);
     //handleDisconnect(/*restartAutoConnect=*/true);
 }
@@ -183,6 +192,7 @@ void SerialPortConnectionManager::onHeartbeatTimeout()
         return;
     }
 
+    LOG_INFO << "Sending heartbeat echo" << std::endl;
     m_waitingEchoReply = true;
     m_portModel->sendCommand(Command::Echo);
     m_responseTimer.start(m_responseTimeoutMs);
@@ -192,12 +202,14 @@ void SerialPortConnectionManager::onResponseTimeout()
 {
     if (m_state == State::Probing)
     {
+        LOG_WRN << "Response timeout while probing" << std::endl;
         probeNextPort();
         return;
     }
 
     if (m_state == State::Connected)
     {
+        LOG_WRN << "Response timeout while connected, restarting auto-connect" << std::endl;
         handleDisconnect(/*restartAutoConnect=*/true);
     }
 }
@@ -210,6 +222,7 @@ void SerialPortConnectionManager::handleDisconnect(bool restartAutoConnect)
 
     if (m_state == State::Connected)
     {
+        LOG_INFO << "Disconnected from port " << m_currentPortName.toStdString() << std::endl;
         emit disconnected();
     }
 
@@ -219,6 +232,7 @@ void SerialPortConnectionManager::handleDisconnect(bool restartAutoConnect)
 
     if (restartAutoConnect)
     {
+        LOG_INFO << "Restarting auto-connect after disconnect" << std::endl;
         startAutoConnect();
     }
 }

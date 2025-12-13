@@ -21,6 +21,7 @@
 #include "StartScreenWidget.h"
 #include "WorkModeState.h"
 #include "WorkModeToolbar.h"
+#include "logger.h"
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
@@ -461,9 +462,10 @@ void MainWindow::saveProject()
 
     project.background = backgroundImage.toImage();
 
+    LOG_INFO << "Saving project to " << path.toStdString() << std::endl;
     if (!ProjectIO::save(path, project))
     {
-        qDebug() << "Failed to save project";
+        LOG_ERR << "Failed to save project at " << path.toStdString();
         if (messageService)
         {
             messageService->showWarning(
@@ -472,7 +474,7 @@ void MainWindow::saveProject()
         return;
     }
 
-    qDebug() << "Project saved successfully";
+    LOG_INFO << "Project saved successfully" << std::endl;
     m_recent.add(path);
     refreshRecentProjects();
 }
@@ -502,9 +504,10 @@ bool MainWindow::loadProjectFromPath(const QString& path)
     }
 
     Project project;
+    LOG_INFO << "Loading project from " << path.toStdString() << std::endl;
     if (!ProjectIO::load(path, project))
     {
-        qDebug() << "Failed to load project";
+        LOG_ERR << "Failed to load project from " << path.toStdString() << std::endl;
         if (messageService)
         {
             messageService->showWarning(this, tr("Ошибка загрузки"), tr("Не удалось загрузить проект:\n%1").arg(path));
@@ -534,7 +537,7 @@ bool MainWindow::loadProjectFromPath(const QString& path)
         addButtonItem(button);
     }
 
-    qDebug() << "Project loaded successfully";
+    LOG_INFO << "Project loaded successfully from " << path.toStdString() << std::endl;
     m_recent.add(path);
     refreshRecentProjects();
     return true;

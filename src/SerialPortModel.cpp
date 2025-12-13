@@ -1,6 +1,6 @@
 #include "SerialPortModel.h"
 
-#include <QDebug>
+#include "logger.h"
 
 SerialPortModel::SerialPortModel(QObject* parent) : QObject(parent), m_serial(new QSerialPort(this))
 {
@@ -21,19 +21,30 @@ bool SerialPortModel::openPort(const QString& portName, int baudRate)
     }
 
     m_serial->setPortName(portName);
+    LOG_INFO << "Opening COM port " << portName.toStdString() << " at " << baudRate << " baud" << std::endl;
     m_serial->setBaudRate(baudRate);
     m_serial->setDataBits(QSerialPort::Data8);
     m_serial->setParity(QSerialPort::NoParity);
     m_serial->setStopBits(QSerialPort::OneStop);
     m_serial->setFlowControl(QSerialPort::NoFlowControl);
-    return m_serial->open(QIODevice::ReadWrite);
+    const bool opened = m_serial->open(QIODevice::ReadWrite);
+    if (!opened)
+    {
+        LOG_ERR << "Failed to open port " << portName.toStdString() << ": " << m_serial->errorString().toStdString()
+                << std::endl;
+    }
+    else
+    {
+        LOG_INFO << "Port " << portName.toStdString() << " opened successfully" << std::endl;
+    }
+    return opened;
 }
 
 void SerialPortModel::closePort()
 {
     if (m_serial->isOpen())
     {
-        qDebug() << "Closing COM port:" << m_serial->portName();
+        LOG_INFO << "Closing COM port " << m_serial->portName().toStdString() << std::endl;
         m_serial->close();
     }
 }
@@ -69,6 +80,7 @@ void SerialPortModel::handleError(QSerialPort::SerialPortError error)
         return;
     }
 
+    LOG_ERR << "Serial port error: " << m_serial->errorString().toStdString() << std::endl;
     emit portError(m_serial->errorString());
 }
 

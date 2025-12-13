@@ -29,6 +29,7 @@ add_executable(${PROJECT_NAME} WIN32
     src/IMessageService.h
     src/KeyboardController.cpp
     src/KeyboardController.h
+    src/logger.h
     src/main.cpp
     src/MainWindow.cpp
     src/MainWindow.h
