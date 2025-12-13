@@ -14,11 +14,13 @@
 #include "PinsDefinition.h"
 #include "RecentProjects.h"
 #include "WorkMode.h"
+#include "WorkModeState.h"
 
 class ImageZoomWidget;
 class StartScreenWidget;
 class ComPortMenu;
 class WorkModeToolbar;
+class WorkModeState;
 
 class MainWindow : public QMainWindow
 {
@@ -63,8 +65,6 @@ public slots:
     void updateComPort(const QString& portName);
 
 private slots:
-    void handleNewWorkMode(WorkMode mode);
-
     void saveProject();
     void loadProject();
 
@@ -96,9 +96,7 @@ private:
     void clearItems();
     void setBackgroundImage(const QPixmap& pixmap);
 
-    bool isWorkingMode() const;
-    bool isModifyMode() const;
-    bool isCheckMode() const;
+    WorkMode currentMode() const;
 
     bool loadProjectFromPath(const QString& path);
 
@@ -118,11 +116,11 @@ private:
     QList<DiodeItem*>  diodeItems{};
     QList<ButtonItem*> buttonItems{};
 
-    WorkModeToolbar*                    workModeUi{nullptr};
-    ComPortMenu*                        comPortMenu{nullptr};
-    std::unique_ptr<IFileDialogService> fileDialogs;
+    WorkModeToolbar* workModeUi{nullptr};
+    WorkModeState*   workModeState{nullptr};
+    ComPortMenu*     comPortMenu{nullptr};
 
-    WorkMode currentWorkMode{WorkMode::Work};
+    std::unique_ptr<IFileDialogService> fileDialogs;
 
     ResizableRectItem* copiedItem{nullptr};
 };

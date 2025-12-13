@@ -19,6 +19,7 @@
 #include "ProjectIO.h"
 #include "QtFileDialogService.h"
 #include "StartScreenWidget.h"
+#include "WorkModeState.h"
 #include "WorkModeToolbar.h"
 
 MainWindow::MainWindow(QWidget* parent)
@@ -33,14 +34,14 @@ MainWindow::MainWindow(QWidget* parent)
     setupScene();
     setupMenus();
 
-    workModeUi  = new WorkModeToolbar(this, this);
-    fileDialogs = std::make_unique<QtFileDialogService>(this);
+    workModeUi    = new WorkModeToolbar(this, this);
+    workModeState = new WorkModeState(this);
+    fileDialogs   = std::make_unique<QtFileDialogService>(this);
 
     connect(scene, &CustomScene::diodeAdded, this, &MainWindow::addDiodeItem);
     connect(scene, &CustomScene::buttonAdded, this, &MainWindow::addButtonItem);
     connect(scene, &CustomScene::pasteItem, this, &MainWindow::pasteItem);
 
-    connect(this, &MainWindow::workModeChanged, this, &MainWindow::handleNewWorkMode);
     connect(this, &MainWindow::modifyModStatusChanged, scene, &CustomScene::setModifiable);
 
     createImageViewer();
@@ -56,14 +57,40 @@ MainWindow::MainWindow(QWidget* parent)
     connect(startScreen, &StartScreenWidget::recentItemActivated, this, &MainWindow::handleRecentProjectRequested);
     connect(startScreen, &StartScreenWidget::clearRecentRequested, this, &MainWindow::handleClearRecentRequested);
 
-    connect(
-        workModeUi, &WorkModeToolbar::workModeSelected, this, [this](WorkMode mode) { emit workModeChanged(mode); });
+    connect(workModeUi,
+            &WorkModeToolbar::workModeSelected,
+            this,
+            [this](WorkMode mode)
+            {
+                if (workModeState)
+                {
+                    workModeState->setMode(mode);
+                }
+            });
     connect(workModeUi, &WorkModeToolbar::loadImageRequested, this, &MainWindow::loadImage);
     connect(workModeUi, &WorkModeToolbar::saveProjectRequested, this, &MainWindow::saveProject);
     connect(workModeUi, &WorkModeToolbar::loadProjectRequested, this, &MainWindow::loadProject);
     connect(this, &MainWindow::projectReady, workModeUi, &WorkModeToolbar::setProjectReady);
 
-    emit workModeChanged(WorkMode::Modify);
+    if (workModeState)
+    {
+        connect(workModeState,
+                &WorkModeState::modeChanged,
+                this,
+                [this](WorkMode mode)
+                {
+                    if (workModeUi)
+                    {
+                        workModeUi->setCurrentMode(mode);
+                    }
+                    emit workModeChanged(mode);
+                });
+        connect(workModeState, &WorkModeState::modifyModeChanged, this, &MainWindow::modifyModStatusChanged);
+        connect(workModeState, &WorkModeState::workModeChanged, this, &MainWindow::workingModStatusChanged);
+        connect(workModeState, &WorkModeState::checkModeChanged, this, &MainWindow::checkModStatusChanged);
+
+        workModeState->setMode(WorkMode::Modify);
+    }
 
     refreshRecentProjects();
 
@@ -150,33 +177,6 @@ void MainWindow::setupScene()
     view->setRenderHint(QPainter::Antialiasing);
 }
 
-bool MainWindow::isWorkingMode() const
-{
-    return currentWorkMode == WorkMode::Work;
-}
-
-bool MainWindow::isModifyMode() const
-{
-    return currentWorkMode == WorkMode::Modify;
-}
-
-bool MainWindow::isCheckMode() const
-{
-    return currentWorkMode == WorkMode::Check;
-}
-
-void MainWindow::handleNewWorkMode(WorkMode mode)
-{
-    currentWorkMode = mode;
-    if (workModeUi)
-    {
-        workModeUi->setCurrentMode(mode);
-    }
-    emit modifyModStatusChanged(isModifyMode());
-    emit workingModStatusChanged(isWorkingMode());
-    emit checkModStatusChanged(isCheckMode());
-}
-
 void MainWindow::loadImage()
 {
     if (!fileDialogs)
@@ -252,12 +252,13 @@ void MainWindow::setupMenus()
 
 void MainWindow::updateStatus(Pins pins, const QVector<Pins>& leds)
 {
-    if (currentWorkMode == WorkMode::Modify || currentWorkMode == WorkMode::DiodeConf)
+    const WorkMode mode = currentMode();
+    if (mode == WorkMode::Modify || mode == WorkMode::DiodeConf)
     {
         return;
     }
 
-    if (currentWorkMode == WorkMode::Work)
+    if (mode == WorkMode::Work)
     {
         emit clearDiodeStatus();
         for (const auto& led : leds)
@@ -268,7 +269,7 @@ void MainWindow::updateStatus(Pins pins, const QVector<Pins>& leds)
         return;
     }
 
-    if (currentWorkMode == WorkMode::Check)
+    if (mode == WorkMode::Check)
     {
         emit    clearButtonStatus();
         QString statusText      = QString("Pins: P1:%1, P2:%2, LEDs: ").arg(pins.pin1).arg(pins.pin2);
@@ -327,7 +328,7 @@ void MainWindow::addResizableItem(ResizableRectItem* item)
 {
     connect(this, &MainWindow::modifyModStatusChanged, item, &ResizableRectItem::setResizable);
     connect(item, &ResizableRectItem::itemCopied, this, &MainWindow::copyItem);
-    item->setResizable(isModifyMode());
+    item->setResizable(currentMode() == WorkMode::Modify);
 }
 
 void MainWindow::updatePinStatus(AbstractItem* item)
@@ -594,4 +595,9 @@ void MainWindow::setBackgroundImage(const QPixmap& pixmap)
     move(avail.center() - QPoint(width() / 2, height() / 2));
 
     emit projectReady(true);
+}
+
+WorkMode MainWindow::currentMode() const
+{
+    return workModeState ? workModeState->currentMode() : WorkMode::Modify;
 }

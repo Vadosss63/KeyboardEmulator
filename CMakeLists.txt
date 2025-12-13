@@ -35,6 +35,9 @@ add_executable(${PROJECT_NAME} WIN32
     src/protocol/CommandDefinition.h
     src/protocol/KeyboardControllerProtocol.h
     src/protocol/PinsDefinition.h
+    src/ComPortMenu.cpp
+    src/ComPortMenu.h
+    src/IFileDialogService.h
     src/QtFileDialogService.cpp
     src/QtFileDialogService.h
     src/RecentProjects.cpp
@@ -50,6 +53,8 @@ add_executable(${PROJECT_NAME} WIN32
     src/StartScreenWidget.cpp
     src/StartScreenWidget.h
     src/WorkMode.h
+    src/WorkModeState.cpp
+    src/WorkModeState.h
     src/WorkModeToolbar.cpp
     src/WorkModeToolbar.h
 )
