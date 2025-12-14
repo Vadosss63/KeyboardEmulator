@@ -2,6 +2,7 @@
 
 #include <QObject>
 #include <QSerialPortInfo>
+#include <QSet>
 #include <QTimer>
 
 #include "SerialPortModel.h"
@@ -9,6 +10,14 @@
 class SerialPortConnectionManager : public QObject
 {
     Q_OBJECT
+
+    enum class State
+    {
+        Disconnected,
+        Probing,
+        Connected
+    };
+
 public:
     explicit SerialPortConnectionManager(SerialPortModel* portModel, QObject* parent = nullptr);
 
@@ -32,20 +41,17 @@ private slots:
     void onPortError(const QString& description);
     void onHeartbeatTimeout();
     void onResponseTimeout();
+    void monitorAvailablePorts();
 
 private:
-    enum class State
-    {
-        Disconnected,
-        Probing,
-        Connected
-    };
-
     void probePorts();
     void probeNextPort();
     void openAndTestPort(const QSerialPortInfo& info);
     void handleConnectSuccess();
     void handleDisconnect(bool restartAutoConnect = true);
+    void updatePortMonitorState();
+
+    QSet<QString> collectPortNames() const;
 
     SerialPortModel* m_portModel{nullptr};
 
@@ -57,10 +63,14 @@ private:
 
     QTimer m_heartbeatTimer{};
     QTimer m_responseTimer{};
+    QTimer m_portMonitorTimer{};
 
     int  m_heartbeatIntervalMs{5000};
     int  m_responseTimeoutMs{1000};
     bool m_waitingEchoReply{false};
 
-    QString m_currentPortName{};
+    QString       m_currentPortName{};
+    QSet<QString> m_lastObservedPorts{};
+
+    static constexpr auto testPort{"/tmp/ttyV1"};
 };

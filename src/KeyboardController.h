@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QObject>
+#include <QString>
 #include <QVector>
 
 #include "KeyboardControllerProtocol.h"
@@ -23,6 +24,11 @@ private slots:
 
     void handleAppCommands(Command command, Pins pins);
     void handleWorkModeChanged(WorkMode mode);
+    void handleComPortSelected(const QString& portName);
+    void handleConnectionEstablished(const QString& port);
+    void handleConnectionLost();
+    void handleConnectionError(const QString& err);
+    void handleRefreshComPortList();
 
 private:
     SerialPortModel*             m_model{nullptr};

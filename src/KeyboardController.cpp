@@ -67,40 +67,26 @@ KeyboardController::KeyboardController(SerialPortModel* model, MainWindow* view,
 
     // View -> Controller
     connect(m_view, &MainWindow::appExecuteCommand, this, &KeyboardController::handleAppCommands);
-    connect(
-        m_view, &MainWindow::comPortSelected, this, [this](const QString& portName) { m_model->openPort(portName); });
+    connect(m_view, &MainWindow::comPortSelected, this, &KeyboardController::handleComPortSelected);
     connect(m_view, &MainWindow::workModeChanged, this, &KeyboardController::handleWorkModeChanged);
 
     connManager = new SerialPortConnectionManager(m_model, this);
 
-    connect(connManager,
-            &SerialPortConnectionManager::connected,
-            this,
-            [this](const QString& port) { m_view->updateComPort(port); });
+    connect(
+        connManager, &SerialPortConnectionManager::connected, this, &KeyboardController::handleConnectionEstablished);
 
-    connect(connManager,
-            &SerialPortConnectionManager::disconnected,
-            this,
-            [this]() { m_view->updateComPort(QString("Не подключено")); });
+    connect(connManager, &SerialPortConnectionManager::disconnected, this, &KeyboardController::handleConnectionLost);
 
-    connect(connManager,
-            &SerialPortConnectionManager::connectionError,
-            this,
-            [this](const QString& err) { m_view->updateComPort(QString("Ошибка: %1").arg(err)); });
+    connect(
+        connManager, &SerialPortConnectionManager::connectionError, this, &KeyboardController::handleConnectionError);
 
     connManager->startAutoConnect();
 
-    connect(
-        m_view,
-        &MainWindow::refreshComPortList,
-        this,
-        [this]()
-        {
-            m_view->updateComPort(QString("Поиск..."));
-            connManager->stopAutoConnect();
-            connManager->startAutoConnect();
-        },
-        Qt::QueuedConnection);
+    connect(m_view,
+            &MainWindow::refreshComPortList,
+            this,
+            &KeyboardController::handleRefreshComPortList,
+            Qt::QueuedConnection);
 }
 
 void KeyboardController::onStatusReceived(Pins pins, const QVector<Pins>& leds)
@@ -147,4 +133,32 @@ void KeyboardController::handleWorkModeChanged(WorkMode mode)
         default:
             break;
     }
+}
+
+void KeyboardController::handleComPortSelected(const QString& portName)
+{
+    m_model->openPort(portName);
+}
+
+void KeyboardController::handleConnectionEstablished(const QString& port)
+{
+    m_view->updateComPort(port);
+}
+
+void KeyboardController::handleConnectionLost()
+{
+    m_view->updateComPort(QString("Не подключено"));
+    m_view->showWarning(tr("Ошибка соединения"), tr("Нет соединения с устройством,\nПопробуйте переподключить USB"));
+}
+
+void KeyboardController::handleConnectionError(const QString& err)
+{
+    m_view->updateComPort(QString("Ошибка: %1").arg(err));
+}
+
+void KeyboardController::handleRefreshComPortList()
+{
+    m_view->updateComPort(QString("Поиск..."));
+    connManager->stopAutoConnect();
+    connManager->startAutoConnect();
 }

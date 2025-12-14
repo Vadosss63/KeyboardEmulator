@@ -16,6 +16,13 @@ SerialPortConnectionManager::SerialPortConnectionManager(SerialPortModel* portMo
 
     m_responseTimer.setSingleShot(true);
     connect(&m_responseTimer, &QTimer::timeout, this, &SerialPortConnectionManager::onResponseTimeout);
+
+    m_portMonitorTimer.setInterval(1500);
+    m_portMonitorTimer.setSingleShot(false);
+    connect(&m_portMonitorTimer, &QTimer::timeout, this, &SerialPortConnectionManager::monitorAvailablePorts);
+
+    m_lastObservedPorts = collectPortNames();
+    updatePortMonitorState();
 }
 
 bool SerialPortConnectionManager::isConnected() const
@@ -58,6 +65,7 @@ void SerialPortConnectionManager::startAutoConnect()
 
     LOG_INFO << "Starting auto-connect probing" << std::endl;
     probePorts();
+    updatePortMonitorState();
 }
 
 void SerialPortConnectionManager::stopAutoConnect()
@@ -72,6 +80,7 @@ void SerialPortConnectionManager::stopAutoConnect()
     m_currentPortName.clear();
     LOG_INFO << "Auto-connect stopped" << std::endl;
     emit disconnected();
+    updatePortMonitorState();
 }
 
 void SerialPortConnectionManager::probePorts()
@@ -88,7 +97,9 @@ void SerialPortConnectionManager::probePorts()
         }
     }
 
-    m_ports.append(QSerialPortInfo("/tmp/ttyV1")); // for testing on Linux
+#ifdef Q_OS_LINUX
+    m_ports.append(QSerialPortInfo(testPort)); // for testing on Linux
+#endif
 
     m_currentPortIndex = -1;
 
@@ -121,6 +132,7 @@ void SerialPortConnectionManager::probeNextPort()
         LOG_ERR << "Device not found on available COM ports" << std::endl;
         emit connectionError(tr("Не удалось найти устройство"));
         emit disconnected();
+        updatePortMonitorState();
         return;
     }
 
@@ -130,7 +142,7 @@ void SerialPortConnectionManager::probeNextPort()
 
 void SerialPortConnectionManager::openAndTestPort(const QSerialPortInfo& info)
 {
-    const QString portName = (info.portName().isEmpty() ? "/tmp/ttyV1" : info.portName());
+    const QString portName = (info.portName().isEmpty() ? testPort : info.portName());
     LOG_INFO << "Testing COM port " << portName.toStdString() << std::endl;
 
     if (!m_portModel->openPort(portName))
@@ -171,13 +183,13 @@ void SerialPortConnectionManager::handleConnectSuccess()
     emit connected(m_currentPortName);
 
     m_heartbeatTimer.start(m_heartbeatIntervalMs);
+    updatePortMonitorState();
 }
 
 void SerialPortConnectionManager::onPortError(const QString& description)
 {
     LOG_ERR << "Serial port error: " << description.toStdString() << std::endl;
     emit connectionError(description);
-    //handleDisconnect(/*restartAutoConnect=*/true);
 }
 
 void SerialPortConnectionManager::onHeartbeatTimeout()
@@ -229,10 +241,65 @@ void SerialPortConnectionManager::handleDisconnect(bool restartAutoConnect)
     m_state = State::Disconnected;
     m_portModel->closePort();
     m_currentPortName.clear();
+    updatePortMonitorState();
 
     if (restartAutoConnect)
     {
         LOG_INFO << "Restarting auto-connect after disconnect" << std::endl;
         startAutoConnect();
     }
+}
+
+void SerialPortConnectionManager::monitorAvailablePorts()
+{
+    const auto    currentPorts = collectPortNames();
+    QSet<QString> newPorts     = currentPorts;
+    for (const auto& port : m_lastObservedPorts)
+    {
+        newPorts.remove(port);
+    }
+
+    m_lastObservedPorts = currentPorts;
+
+    if (!newPorts.isEmpty() && m_state == State::Disconnected)
+    {
+        LOG_INFO << "Detected new serial port(s), starting auto-connect" << std::endl;
+        startAutoConnect();
+    }
+}
+
+void SerialPortConnectionManager::updatePortMonitorState()
+{
+    const bool shouldMonitor = (m_state == State::Disconnected);
+    if (shouldMonitor)
+    {
+        if (!m_portMonitorTimer.isActive())
+        {
+            m_lastObservedPorts = collectPortNames();
+            m_portMonitorTimer.start();
+            LOG_INFO << "Started monitoring serial ports" << std::endl;
+        }
+    }
+    else if (m_portMonitorTimer.isActive())
+    {
+        m_portMonitorTimer.stop();
+        LOG_INFO << "Stopped monitoring serial ports" << std::endl;
+    }
+}
+
+QSet<QString> SerialPortConnectionManager::collectPortNames() const
+{
+    QSet<QString> ports;
+
+    for (const auto& info : QSerialPortInfo::availablePorts())
+    {
+        const QString portName = info.portName();
+
+        if (portName.startsWith("COM") || portName.startsWith("ttyUSB"))
+        {
+            ports.insert(portName);
+        }
+    }
+
+    return ports;
 }

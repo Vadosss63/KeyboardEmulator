@@ -371,6 +371,14 @@ void MainWindow::updateComPort(const QString& portName)
     }
 }
 
+void MainWindow::showWarning(const QString& title, const QString& text)
+{
+    if (messageService)
+    {
+        messageService->showWarning(this, title, text);
+    }
+}
+
 void MainWindow::saveProject()
 {
     QString dir = m_recent.lastOpenDir();

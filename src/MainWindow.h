@@ -61,6 +61,7 @@ public slots:
     void updatePinStatus(AbstractItem* item);
 
     void updateComPort(const QString& portName);
+    void showWarning(const QString& title, const QString& text);
 
 private slots:
     void saveProject();
