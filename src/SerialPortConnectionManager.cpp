@@ -1,5 +1,7 @@
 #include "SerialPortConnectionManager.h"
 
+#include <QtGlobal>
+
 #include "logger.h"
 
 SerialPortConnectionManager::SerialPortConnectionManager(SerialPortModel* portModel, QObject* parent)
@@ -254,7 +256,7 @@ void SerialPortConnectionManager::monitorAvailablePorts()
 {
     const auto    currentPorts = collectPortNames();
     QSet<QString> newPorts     = currentPorts;
-    for (const auto& port : m_lastObservedPorts)
+    for (const auto& port : qAsConst(m_lastObservedPorts))
     {
         newPorts.remove(port);
     }
