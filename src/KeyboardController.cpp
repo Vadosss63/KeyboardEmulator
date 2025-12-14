@@ -1,5 +1,6 @@
 #include "KeyboardController.h"
 
+#include "DiodeSyncService.h"
 #include "MainWindow.h"
 #include "SerialPortConnectionManager.h"
 #include "SerialPortModel.h"
@@ -69,6 +70,11 @@ KeyboardController::KeyboardController(SerialPortModel* model, MainWindow* view,
     connect(m_view, &MainWindow::appExecuteCommand, this, &KeyboardController::handleAppCommands);
     connect(m_view, &MainWindow::comPortSelected, this, &KeyboardController::handleComPortSelected);
     connect(m_view, &MainWindow::workModeChanged, this, &KeyboardController::handleWorkModeChanged);
+
+    m_diodeSync = new DiodeSyncService(m_model, this);
+    connect(m_view, &MainWindow::diodesReset, m_diodeSync, &DiodeSyncService::reset);
+    connect(m_view, &MainWindow::diodeConfigured, m_diodeSync, &DiodeSyncService::upsert);
+    connect(m_view, &MainWindow::diodeRemoved, m_diodeSync, &DiodeSyncService::remove);
 
     connManager = new SerialPortConnectionManager(m_model, this);
 
@@ -142,11 +148,19 @@ void KeyboardController::handleComPortSelected(const QString& portName)
 
 void KeyboardController::handleConnectionEstablished(const QString& port)
 {
+    if (m_diodeSync)
+    {
+        m_diodeSync->handleConnectionEstablished();
+    }
     m_view->updateComPort(port);
 }
 
 void KeyboardController::handleConnectionLost()
 {
+    if (m_diodeSync)
+    {
+        m_diodeSync->handleConnectionLost();
+    }
     m_view->updateComPort(QString("Не подключено"));
     m_view->showWarning(tr("Ошибка соединения"), tr("Нет соединения с устройством,\nПопробуйте переподключить USB"));
 }

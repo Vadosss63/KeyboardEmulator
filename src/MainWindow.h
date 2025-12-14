@@ -5,6 +5,7 @@
 #include <QMainWindow>
 #include <QMenu>
 #include <QStackedWidget>
+#include <QVector>
 #include <cstdint>
 #include <memory>
 
@@ -34,6 +35,9 @@ public:
 signals:
     // View → Controller
     void appExecuteCommand(Command command, Pins pins = {0, 0});
+    void diodesReset(const QVector<Pins>& diodes);
+    void diodeConfigured(Pins pins);
+    void diodeRemoved(Pins pins);
 
     void comPortSelected(const QString& portName);
 

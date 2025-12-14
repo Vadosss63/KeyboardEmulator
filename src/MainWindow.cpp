@@ -293,7 +293,7 @@ void MainWindow::handleDiodeRemoval(DiodeItem* diode)
     {
         return;
     }
-    emit appExecuteCommand(Command::ModeDiodeConfigDel, {diode->getPin1(), diode->getPin2()});
+    emit diodeRemoved(Pins{diode->getPin1(), diode->getPin2()});
 }
 
 void MainWindow::handleButtonRemoval(ButtonItem* /*button*/)
@@ -360,7 +360,7 @@ void MainWindow::updatePinStatus(AbstractItem* item)
         return;
     }
 
-    emit appExecuteCommand(Command::ModeDiodeConfig, {item->getPin1(), item->getPin2()});
+    emit diodeConfigured(Pins{item->getPin1(), item->getPin2()});
 }
 
 void MainWindow::updateComPort(const QString& portName)
@@ -473,7 +473,8 @@ bool MainWindow::loadProjectFromPath(const QString& path)
     // Restore background
     setBackgroundImage(QPixmap::fromImage(project.background));
 
-    emit appExecuteCommand(Command::ModeDiodeClear, {0, 0});
+    QVector<Pins> diodePins;
+    diodePins.reserve(project.leds.size());
 
     // Restore LEDs
     for (const auto& ledDef : project.leds)
@@ -488,8 +489,9 @@ bool MainWindow::loadProjectFromPath(const QString& path)
             scene->addItem(diode);
             bindDiodeItem(diode);
         }
-        emit appExecuteCommand(Command::ModeDiodeConfig, {diode->getPin1(), diode->getPin2()});
+        diodePins.append(Pins{static_cast<uint8_t>(ledDef.p1), static_cast<uint8_t>(ledDef.p2)});
     }
+    emit diodesReset(diodePins);
 
     // Restore buttons
     for (const auto& buttonDef : project.buttons)

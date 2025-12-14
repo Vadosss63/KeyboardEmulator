@@ -11,6 +11,7 @@
 class MainWindow;
 
 class SerialPortModel;
+class DiodeSyncService;
 
 class KeyboardController : public QObject
 {
@@ -34,6 +35,7 @@ private:
     SerialPortModel*             m_model{nullptr};
     SerialPortConnectionManager* connManager{nullptr};
     MainWindow*                  m_view{nullptr};
+    DiodeSyncService*            m_diodeSync{nullptr};
 
     WorkMode m_currentMode{WorkMode::Modify};
 };
