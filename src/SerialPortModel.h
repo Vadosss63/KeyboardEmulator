@@ -2,7 +2,9 @@
 
 #include <QByteArray>
 #include <QObject>
+#include <QQueue>
 #include <QSerialPort>
+#include <QTimer>
 #include <QVector>
 
 #include "KeyboardControllerProtocol.h"
@@ -44,6 +46,33 @@ private:
 
     void parsePacket(QByteArray& frame);
 
+    void enqueueCommand(Command command, Pins pins);
+    void enqueueCommand(Command command);
+    void processQueue();
+    void handleCommandAck(Command command);
+    void handleQueueDelayTimeout();
+    void handleAckTimeout();
+    void clearCommandQueue();
+
+    static bool requiresAcknowledgement(Command command);
+
+    struct QueuedCommand
+    {
+        Command command{Command::None};
+
+        std::vector<uint8_t> payload;
+    };
+
     QSerialPort* m_serial;
     QByteArray   m_buffer;
+
+    QQueue<QueuedCommand> m_commandQueue;
+
+    QTimer  m_commandDelayTimer;
+    QTimer  m_ackTimeoutTimer;
+    bool    m_waitingForAck{false};
+    Command m_expectedAck{Command::None};
+
+    static constexpr int kInterCommandDelayMs = 5;
+    static constexpr int kAckTimeoutMs        = 200;
 };

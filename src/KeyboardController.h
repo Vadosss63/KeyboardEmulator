@@ -33,7 +33,7 @@ private slots:
 
 private:
     SerialPortModel*             m_model{nullptr};
-    SerialPortConnectionManager* connManager{nullptr};
+    SerialPortConnectionManager* m_connectManager{nullptr};
     MainWindow*                  m_view{nullptr};
     DiodeSyncService*            m_diodeSync{nullptr};
 

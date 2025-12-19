@@ -76,17 +76,22 @@ KeyboardController::KeyboardController(SerialPortModel* model, MainWindow* view,
     connect(m_view, &MainWindow::diodeConfigured, m_diodeSync, &DiodeSyncService::upsert);
     connect(m_view, &MainWindow::diodeRemoved, m_diodeSync, &DiodeSyncService::remove);
 
-    connManager = new SerialPortConnectionManager(m_model, this);
+    m_connectManager = new SerialPortConnectionManager(m_model, this);
+
+    connect(m_connectManager,
+            &SerialPortConnectionManager::connected,
+            this,
+            &KeyboardController::handleConnectionEstablished);
 
     connect(
-        connManager, &SerialPortConnectionManager::connected, this, &KeyboardController::handleConnectionEstablished);
+        m_connectManager, &SerialPortConnectionManager::disconnected, this, &KeyboardController::handleConnectionLost);
 
-    connect(connManager, &SerialPortConnectionManager::disconnected, this, &KeyboardController::handleConnectionLost);
+    connect(m_connectManager,
+            &SerialPortConnectionManager::connectionError,
+            this,
+            &KeyboardController::handleConnectionError);
 
-    connect(
-        connManager, &SerialPortConnectionManager::connectionError, this, &KeyboardController::handleConnectionError);
-
-    connManager->startAutoConnect();
+    m_connectManager->startAutoConnect();
 
     connect(m_view,
             &MainWindow::refreshComPortList,
@@ -116,7 +121,6 @@ void KeyboardController::handleHwCmd(Command command)
     if (isConfigCommand)
     {
         emit m_view->workModeChanged(m_currentMode);
-        return;
     }
 }
 
@@ -128,14 +132,20 @@ void KeyboardController::handleWorkModeChanged(WorkMode mode)
     switch (mode)
     {
         case WorkMode::Work:
+        {
             m_model->sendCommand(Command::ModeRun);
             break;
+        }
         case WorkMode::Check:
+        {
             m_model->sendCommand(Command::ModeCheckKeyboard);
             break;
+        }
         case WorkMode::Modify:
+        {
             m_model->sendCommand(Command::ModeConfigure);
             break;
+        }
         default:
             break;
     }
@@ -173,6 +183,6 @@ void KeyboardController::handleConnectionError(const QString& err)
 void KeyboardController::handleRefreshComPortList()
 {
     m_view->updateComPort(QString("Поиск..."));
-    connManager->stopAutoConnect();
-    connManager->startAutoConnect();
+    m_connectManager->stopAutoConnect();
+    m_connectManager->startAutoConnect();
 }

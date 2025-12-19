@@ -6,6 +6,12 @@ SerialPortModel::SerialPortModel(QObject* parent) : QObject(parent), m_serial(ne
 {
     connect(m_serial, &QSerialPort::readyRead, this, &SerialPortModel::handleReadyRead);
     connect(m_serial, &QSerialPort::errorOccurred, this, &SerialPortModel::handleError);
+
+    m_commandDelayTimer.setSingleShot(true);
+    connect(&m_commandDelayTimer, &QTimer::timeout, this, &SerialPortModel::handleQueueDelayTimeout);
+
+    m_ackTimeoutTimer.setSingleShot(true);
+    connect(&m_ackTimeoutTimer, &QTimer::timeout, this, &SerialPortModel::handleAckTimeout);
 }
 
 SerialPortModel::~SerialPortModel()
@@ -36,6 +42,7 @@ bool SerialPortModel::openPort(const QString& portName, int baudRate)
     else
     {
         LOG_INFO << "Port " << portName.toStdString() << " opened successfully" << std::endl;
+        processQueue();
     }
     return opened;
 }
@@ -46,6 +53,7 @@ void SerialPortModel::closePort()
     {
         LOG_INFO << "Closing COM port " << m_serial->portName().toStdString() << std::endl;
         m_serial->close();
+        clearCommandQueue();
     }
 }
 
@@ -57,14 +65,12 @@ void SerialPortModel::clearBuffer()
 
 void SerialPortModel::sendCommand(Command command, Pins pins)
 {
-    auto packet = build_packet_for_cmd(command, pins);
-    m_serial->write(reinterpret_cast<const char*>(packet.data()), packet.size());
+    enqueueCommand(command, pins);
 }
 
 void SerialPortModel::sendCommand(Command command)
 {
-    auto packet = build_packet_for_cmd(command);
-    m_serial->write(reinterpret_cast<const char*>(packet.data()), packet.size());
+    enqueueCommand(command);
 }
 
 void SerialPortModel::handleReadyRead()
@@ -118,6 +124,7 @@ void SerialPortModel::parsePacket(QByteArray& frame)
 
     if (rp->command == Command::Echo)
     {
+        handleCommandAck(Command::Echo);
         emit echoReceived();
         return;
     }
@@ -136,5 +143,132 @@ void SerialPortModel::parsePacket(QByteArray& frame)
         return;
     }
 
+    handleCommandAck(rp->command);
     emit receivedCommand(rp->command);
+}
+
+void SerialPortModel::enqueueCommand(Command command, Pins pins)
+{
+    m_commandQueue.enqueue({command, build_packet_for_cmd(command, pins)});
+    processQueue();
+}
+
+void SerialPortModel::enqueueCommand(Command command)
+{
+    m_commandQueue.enqueue({command, build_packet_for_cmd(command)});
+    processQueue();
+}
+
+void SerialPortModel::processQueue()
+{
+    if (!m_serial || !m_serial->isOpen())
+    {
+        return;
+    }
+
+    if (m_waitingForAck)
+    {
+        return;
+    }
+
+    if (m_commandDelayTimer.isActive())
+    {
+        return;
+    }
+
+    while (!m_commandQueue.isEmpty())
+    {
+        const QueuedCommand cmd = m_commandQueue.dequeue();
+
+        const std::vector<uint8_t>& packet = cmd.payload;
+
+        m_serial->write(reinterpret_cast<const char*>(packet.data()), packet.size());
+
+        if (requiresAcknowledgement(cmd.command))
+        {
+            m_waitingForAck = true;
+            m_expectedAck   = cmd.command;
+            m_ackTimeoutTimer.start(kAckTimeoutMs);
+            break;
+        }
+
+        if (kInterCommandDelayMs > 0)
+        {
+            m_commandDelayTimer.start(kInterCommandDelayMs);
+            break;
+        }
+    }
+}
+
+void SerialPortModel::handleCommandAck(Command command)
+{
+    if (!m_waitingForAck)
+    {
+        return;
+    }
+
+    if (command != m_expectedAck)
+    {
+        return;
+    }
+
+    m_waitingForAck = false;
+    m_expectedAck   = Command::None;
+    m_ackTimeoutTimer.stop();
+
+    if (kInterCommandDelayMs > 0)
+    {
+        m_commandDelayTimer.start(kInterCommandDelayMs);
+        return;
+    }
+
+    processQueue();
+}
+
+void SerialPortModel::handleQueueDelayTimeout()
+{
+    processQueue();
+}
+
+void SerialPortModel::handleAckTimeout()
+{
+    if (!m_waitingForAck)
+    {
+        return;
+    }
+
+    LOG_WRN << "Ack timeout for command " << static_cast<int>(m_expectedAck) << std::endl;
+    m_waitingForAck = false;
+    m_expectedAck   = Command::None;
+
+    if (kInterCommandDelayMs > 0)
+    {
+        m_commandDelayTimer.start(kInterCommandDelayMs);
+        return;
+    }
+
+    processQueue();
+}
+
+void SerialPortModel::clearCommandQueue()
+{
+    m_commandQueue.clear();
+    m_commandDelayTimer.stop();
+    m_ackTimeoutTimer.stop();
+    m_waitingForAck = false;
+    m_expectedAck   = Command::None;
+}
+
+bool SerialPortModel::requiresAcknowledgement(Command command)
+{
+    switch (command)
+    {
+        case Command::Echo:
+        case Command::ModeDiodeConfig:
+        case Command::ModeDiodeConfigDel:
+        case Command::ModeDiodeClear:
+            return true;
+        default:
+            return false;
+    }
 }
